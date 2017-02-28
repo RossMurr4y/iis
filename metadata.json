@@ -4,8 +4,8 @@
   "author": "rmurray",
   "summary": "IIS Provider and Type to work with Powershell v3 onwards, on new and old Windows OS",
   "license": "MIT",
-  "source": "",
-  "project_page": "https://github.com/rossmurr4y/puppet-iis",
+  "source": "https://github.com/rossmurr4y/puppet-iis",
+  "project_page": "(https://github.com/rossmurr4y/puppet-iis)",
   "issues_url": "https://github.com/rossmurr4y/puppet-iis/issues",
   "dependencies": [
     {
