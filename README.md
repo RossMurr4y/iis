@@ -50,6 +50,7 @@ The following Resource Types are available:
 
 Example manifest entry for the creation of an IIS Website called 'TestWebsite'
 
+```puppet
 iis_site { 'TestWebsite':
   ensure     => 'present',
   path       => 'D:\inetpub\content\TestWebsite',
@@ -61,6 +62,7 @@ iis_site { 'TestWebsite':
   port       => '80',
   ssl        => 'false',
 }
+```
 
 #### Attribute Values for iis_site
 
@@ -70,7 +72,7 @@ path:       must be an absolute filepath.
 
 state:      stopped, started. Defaults to started.
 
-app_pool:   Must match against the following regex: %r{[a-zA-Z0-9\-\_\'\s]+$} 
+app_pool:   Must match against the following regex: %r{[a-zA-Z0-9\-\_\'\s]+$}
             Defaults to 'DefaultAppPool'
 
 hostheader: Must match against the following regex: %r{[a-zA-Z0-9\-\_\'\.\s]+$} 
@@ -88,6 +90,7 @@ ssl:        true, false. Defaults to false.
 
 Example manifest entry for the creation of an Application Pool called 'TestPool'
 
+```puppet
 iis_pool { 'TestPool':
   ensure              => 'present',
   state               => 'Started',
@@ -106,6 +109,7 @@ iis_pool { 'TestPool':
   recyclemins         => 60,
   recyclesched        => "23:30:00",
 }
+```
 
 #### Attribute Values for iis_pool
 
@@ -147,12 +151,14 @@ recyclesched:        String in the format of "HH:MM:SS"
 
 Example manifest entry for the creation of an IIS Application called 'MyTestApp'.
 
+```puppet
 iis_app { 'D:\inetpub\content\MyTestSite\MyTestApp':
   ensure       => 'present',
   name         => 'MyTestApp',
   app_pool     => 'MyTestAppPool',
   site         => 'MyTestSite',
 }
+```
 
 #### Attribute Values for iis_app
 
@@ -171,10 +177,12 @@ site:         Must match against regex: %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}.
 
 Example manifest entry for the creation of a Virtual Directory.
 
+```puppet
 iis_vdir { '/MyTestVDir':
   site => 'MyTestSite',
   path => 'C:\VdirContents\MyTestVDir',
 }
+```
 
 #### Attribute Values for iis_vdir
 
