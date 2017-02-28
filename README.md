@@ -4,80 +4,197 @@
 
 1. [Description](#description)
 1. [Setup - The basics of getting started with iis](#setup)
-    * [What iis affects](#what-iis-affects)
-    * [Setup requirements](#setup-requirements)
-    * [Beginning with iis](#beginning-with-iis)
-1. [Usage - Configuration options and additional functionality](#usage)
+1. [Resource Types - Types, Attributes and valid values](#Resource Types)
+      * [iis_site](#Type Attributes-iis_site)
+      * [iis_pool](#Type Attributes-iis_pool)
+      * [iis_app](#Type Attributes-iis_app)
+      * [iis_vdir](#Type Attributes-iis_vdir)
 1. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
 1. [Limitations - OS compatibility, etc.](#limitations)
 1. [Development - Guide for contributing to the module](#development)
 
 ## Description
 
-Start with a one- or two-sentence summary of what the module does and/or what
-problem it solves. This is your 30-second elevator pitch for your module.
-Consider including OS/Puppet version it works with.
+This Puppet Module is intended to allow Puppet to manage IIS resources (Site's, 
+Application Pools, Applications and Virtual Directories) on older OS's
+(Windows Server 2008) as well as more current OS (Windows Server 2012). 
 
-You can give more descriptive information in a second paragraph. This paragraph
-should answer the questions: "What does this module *do*?" and "Why would I use
-it?" If your module has a range of functionality (installation, configuration,
-management, etc.), this is the time to mention it.
+This module will work with older Windows Server 2008 servers, upgraded to at least
+WMF 3.0 which is the lowest supported version for 'ConvertTo-Json'. Later OS's using 
+this Module will instead utilise the WebAdministration Powershell Module. Both have 
+very similar functionalities, and the module will account for any deviations. 
 
 ## Setup
 
-### What iis affects **OPTIONAL**
+At the current time, this module assumes the following:
+* IIS itself is already installed and configgured (future feature)
+* Servers using WMF3.0 have the [WebAdministration](https://www.iis.net/downloads/microsoft/powershell) 
+  SnapIn installed (future feature)
 
-If it's obvious what your module touches, you can skip this section. For
-example, folks can probably figure out that your mysql_instance module affects
-their MySQL instances.
+## Resource Types
 
-If there's more that they should know about, though, this is the place to mention:
+The following Resource Types are available:
 
-* A list of files, packages, services, or operations that the module will alter,
-  impact, or execute.
-* Dependencies that your module automatically installs.
-* Warnings or other important notices.
+* [iis_site](#Type Attributes-iis_site)
+    * [attributes](Type Attributes-iis_site-Attribute Values for iis_site)
+* [iis_pool](#Type Attributes-iis_pool)
+    * [attributes](Type Attributes-iis_pool-Attribute Values for iis_pool)
+* [iis_app](#Type Attributes-iis_app)
+    * [attributes](Type Attributes-iis_app-Attribute Values for iis_app)
+* [iis_vdir](#Type Attributes-iis_vdir)
+    * [attributes](Type Attributes-iis_vdir-Attribute Values for iis_vdir)
 
-### Setup Requirements **OPTIONAL**
+## Type Attributes
 
-If your module requires anything extra before setting up (pluginsync enabled,
-etc.), mention it here.
+### iis_site
 
-If your most recent release breaks compatibility or requires particular steps
-for upgrading, you might want to include an additional "Upgrading" section
-here.
+Example manifest entry for the creation of an IIS Website called 'TestWebsite'
 
-### Beginning with iis
+iis_site { 'TestWebsite':
+  ensure     => 'present',
+  path       => 'D:\inetpub\content\TestWebsite',
+  app_pool   => 'TestApplicationPool',
+  state      => 'Started',
+  hostheader => 'testwebsiteheader',
+  protocol   => 'http',
+  ip         => '127.0.0.1',
+  port       => '80',
+  ssl        => 'false',
+}
 
-The very basic steps needed for a user to get the module up and running. This
-can include setup steps, if necessary, or it can be an example of the most
-basic use of the module.
+#### Attribute Values for iis_site
 
-## Usage
+The following values are valid for their corresponding attributes:
 
-This section is where you describe how to customize, configure, and do the
-fancy stuff with your module here. It's especially helpful if you include usage
-examples and code samples for doing things with your module.
+path:       must be an absolute filepath.
 
-## Reference
+state:      stopped, started. Defaults to started.
 
-Here, include a complete list of your module's classes, types, providers,
-facts, along with the parameters for each. Users refer to this section (thus
-the name "Reference") to find specific details; most users don't read it per
-se.
+app_pool:   Must match against the following regex: %r{[a-zA-Z0-9\-\_\'\s]+$} 
+            Defaults to 'DefaultAppPool'
+
+hostheader: Must match against the following regex: %r{[a-zA-Z0-9\-\_\'\.\s]+$} 
+            OR 'false'
+
+protocol:   http, https. Defaults to http.
+
+ip:         either *, or a valid IPv4 or IPv6 address. Defaults to *.
+
+port:       Must be a valid port number. Integer, not string.
+
+ssl:        true, false. Defaults to false.
+
+### iis_pool
+
+Example manifest entry for the creation of an Application Pool called 'TestPool'
+
+iis_pool { 'TestPool':
+  ensure              => 'present',
+  state               => 'Started',
+  enable_32bit        => 'false',
+  runtime             => 'v4.0',
+  pipeline            => 'Integrated',
+  identitytype        => 'SpecificUser',
+  identity            => '<DOMAIN>\TestUserAccount',
+  identitypassword    => 'hopefullynotplaintextpwd',
+  startmode           => 'OnDemand',
+  rapidfailprotection => 'true',
+  idletimeout         => '8000',
+  idletimeoutaction   => 'Terminate',
+  maxprocesses        => 1,
+  maxqueue            => 1,
+  recyclemins         => 60,
+  recyclesched        => "23:30:00",
+}
+
+#### Attribute Values for iis_pool
+
+The following values are valid for their corresponding attributes:
+
+state:               Stopped, Started. Defaults to Started.
+
+enable_32bit:        true, false.
+
+runtime:             v4.0, v2.0, nil.
+
+pipeline:            Integrated, Classic, 0 (Integrated), 1 (Classic)
+
+identitytype:        LocalSystem (or 0), LocalService (or 1), 
+                     NetworkService (or 2), SpecificUser (or 3), 
+                     ApplicationPoolIdentity (or 4)
+
+identity:            Must match regex: %r{^[a-zA-Z0-9\\\-\_\@\.\s]+$} Can Start with a DOMAIN.
+
+identitypassword:    No validation. Please don't just use plaintext. Use hiera and/or EYAML.
+
+startmode:           OnDemand, AlwaysRunning, true, false.
+
+rapidfailprotection: true, false.
+
+idletimeout:         Integer. 
+
+idletimeoutaction:   Suspend, Terminate.
+
+maxprocesses:        Integer.
+
+maxqueue:            Integer.
+
+recyclemins:         Integer.
+
+recyclesched:        String in the format of "HH:MM:SS"
+
+### iis_app
+
+Example manifest entry for the creation of an IIS Application called 'MyTestApp'.
+
+iis_app { 'D:\inetpub\content\MyTestSite\MyTestApp':
+  ensure       => 'present',
+  name         => 'MyTestApp',
+  app_pool     => 'MyTestAppPool',
+  site         => 'MyTestSite',
+}
+
+#### Attribute Values for iis_app
+
+The following values are valid for their corresponding attributes:
+
+physicalpath: Must be an absolute filepath. This is also the namevar, so title
+              your resource accordingly (see example above). This is to prevent
+              duplicate resource names on a server hosting many Web Apps.
+
+app_pool:     Must match against regex: %r{[a-zA-Z0-9\-\_'\s]+$}. Defaults to
+              DefaultAppPool.
+
+site:         Must match against regex: %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}.
+
+### iis_vdir
+
+Example manifest entry for the creation of a Virtual Directory.
+
+iis_vdir { '/MyTestVDir':
+  site => 'MyTestSite',
+  path => 'C:\VdirContents\MyTestVDir',
+}
+
+#### Attribute Values for iis_vdir
+
+The following values are valid for their corresponding attributes:
+
+site: Must match against regex: %r{^[a-zA-Z0-9\-\_\/\s]+$}
+
+path: Must be a fully qualified filepath.
 
 ## Limitations
 
-This is where you list OS compatibility, version compatibility, etc. If there
-are Known Issues, you might want to include them under their own heading here.
+Compatible with  the following:
 
-## Development
+### Operating Systems
+* Windows Server 2008 (with installed WebAdministration Powershell SnapIn and WMF 3.0+)
+* Windows Server 2012R2
 
-Since your module is awesome, other users will want to play with it. Let them
-know what the ground rules for contributing are.
+### Puppet
+* 2016.5.1
 
-## Release Notes/Contributors/Etc. **Optional**
+### Ruby
+<TBA>
 
-If you aren't using changelog, put your release notes here (though you should
-consider using changelog). You can also add any additional sections you feel
-are necessary or important to include here. Please use the `## ` header.
