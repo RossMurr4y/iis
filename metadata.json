@@ -1,0 +1,15 @@
+{
+  "name": "rmurray-iis",
+  "version": "0.1.0",
+  "author": "rmurray",
+  "summary": "IIS Provider and Type to work with both Powershell v3 onwards.",
+  "license": "Apache-2.0",
+  "source": "",
+  "project_page": null,
+  "issues_url": null,
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ],
+  "data_provider": null
+}
+
