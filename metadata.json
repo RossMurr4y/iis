@@ -2,16 +2,29 @@
   "name": "rmurray-iis",
   "version": "0.1.0",
   "author": "rmurray",
-  "summary": "IIS Provider and Type to work with Powershell v3 onwards, on new and old Windows OS",
+  "summary": "IIS Provider and Type designed for compatability with as ride a range of Windows Server OS's as possible.",
   "license": "MIT",
   "source": "https://github.com/rossmurr4y/puppet-iis",
   "project_page": "(https://github.com/rossmurr4y/puppet-iis)",
   "issues_url": "https://github.com/rossmurr4y/puppet-iis/issues",
-  "dependencies": [
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "windows",
+      "operatingsystemrelease": [
+        "2008",
+        "2008R2",
+        "2012",
+        "2012R2"
+      ]
+    }
+  ],
+  "requirements": [
     {
       "name": "puppet",
       "version_requirement": ">= 4.6.1 < 5.0.0"
-    },
+    }
+  ],
+  "dependencies": [
     {
       "name":"puppetlabs-stdlib",
       "version_requirement": ">= 4.6.0 < 5.0.0"
