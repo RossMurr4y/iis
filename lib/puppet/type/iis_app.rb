@@ -30,7 +30,7 @@ Puppet::Type.newtype(:iis_app) do
   newproperty(:app_pool) do
     desc 'The Application Pool used by the Application.'
     validate do |value|
-      fail("#{app_pool} is not a valid Application Pool name") unless value =~ %r{[a-zA-Z0-9\-\_'\s]+$}
+      fail("#{value} is not a valid Application Pool name") unless value =~ %r{[a-zA-Z0-9\-\_'\s]+$}
     end
     defaultto :DefaultAppPool
   end
@@ -38,7 +38,7 @@ Puppet::Type.newtype(:iis_app) do
   newproperty(:site) do
     desc 'The Site that this Application belongs under.'
     validate do |value|
-       fail("#{name} is not a valid website name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
+       fail("#{value} is not a valid website name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
     end
   end
 
