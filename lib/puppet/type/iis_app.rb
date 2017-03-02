@@ -42,7 +42,7 @@ Puppet::Type.newtype(:iis_app) do
     end
   end
 
-  autorequire(:iis_site) do
+  autorequire(:site) do
     self[:site] if @parameters.include? :site
   end
 
