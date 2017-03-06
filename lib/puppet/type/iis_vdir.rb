@@ -11,7 +11,7 @@ Puppet::Type.newtype(:iis_vdir) do
   end
   
   ### properties
-  newproperty(:site) do
+  newproperty(:parent_site) do
     desc 'The site in which this virtual directory resides.'
     validate do |value|
       raise("#{value} is not a valid site name") unless value =~ %r{^[a-zA-Z0-9\-\_\/\s]+$}
@@ -26,7 +26,7 @@ Puppet::Type.newtype(:iis_vdir) do
   end
 
   autorequire(:iis_site) do
-    self[:site] if @parameters.include? :site
+    self[:parent_site] if @parameters.include? :parent_site
   end
 
 end

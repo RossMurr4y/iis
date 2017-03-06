@@ -35,18 +35,18 @@ Puppet::Type.newtype(:iis_app) do
     defaultto :DefaultAppPool
   end
 
-  newproperty(:site) do
+  newproperty(:parent_site) do
     desc 'The Site that this Application belongs under.'
     validate do |value|
        fail("#{value} is not a valid website name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
     end
   end
 
-  autorequire(:site) do
-    self[:site] if @parameters.include? :site
+  autorequire(:iis_site) do
+    self[:parent_site] if @parameters.include? :parent_site
   end
 
-  autorequire(:app_pool) do
+  autorequire(:iis_pool) do
     self[:app_pool] if @parameters.include? :app_pool
   end
 

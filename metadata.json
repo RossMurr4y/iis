@@ -1,6 +1,6 @@
 {
   "name": "rmurray-iis",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "rmurray",
   "summary": "IIS Provider and Type designed for compatability with as ride a range of Windows Server OS's as possible.",
   "license": "MIT",

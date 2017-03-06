@@ -156,7 +156,7 @@ iis_app { 'D:\inetpub\content\MyTestSite\MyTestApp':
   ensure       => 'present',
   name         => 'MyTestApp',
   app_pool     => 'MyTestAppPool',
-  site         => 'MyTestSite',
+  parent_site  => 'MyTestSite',
 }
 ```
 
@@ -171,7 +171,7 @@ physicalpath: Must be an absolute filepath. This is also the namevar, so title
 app_pool:     Must match against regex: %r{[a-zA-Z0-9\-\_'\s]+$}. Defaults to
               DefaultAppPool.
 
-site:         Must match against regex: %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}.
+parent_site:  Must match against regex: %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}.
 
 ### iis_vdir
 
@@ -179,7 +179,7 @@ Example manifest entry for the creation of a Virtual Directory.
 
 ```puppet
 iis_vdir { '/MyTestVDir':
-  site => 'MyTestSite',
+  parent_site => 'MyTestSite',
   path => 'C:\VdirContents\MyTestVDir',
 }
 ```
@@ -188,7 +188,7 @@ iis_vdir { '/MyTestVDir':
 
 The following values are valid for their corresponding attributes:
 
-site: Must match against regex: %r{^[a-zA-Z0-9\-\_\/\s]+$}
+parent_site: Must match against regex: %r{^[a-zA-Z0-9\-\_\/\s]+$}
 
 path: Must be a fully qualified filepath.
 

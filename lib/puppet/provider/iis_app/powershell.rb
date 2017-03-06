@@ -36,9 +36,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
       app_hash[:name]         = app['path'].gsub(%r{^\/}, '')
       app_hash[:physicalpath] = app['physicalPath']
       app_hash[:app_pool]     = app['applicationPool']
-      app_hash[:site]         = app['ItemXPath'].scan(%r{'([^']*)'}).first.first
-     # Using match method doesn't like working on 2008, hence above overly complicated method. 
-     #app_hash[:site]         = app['ItemXPath'].match(%r{@name='([a-z0-9_\ ]+)'}i)[1]
+      app_hash[:parent_site]  = app['ItemXPath'].scan(%r{'([^']*)'}).first.first
       new(app_hash)
     end
   end
@@ -52,7 +50,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
       "#$snap_mod;",
       "New-WebApplication -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:physicalpath]}\"",
-      "-Site \"#{@resource[:site]}\"",
+      "-Site \"#{@resource[:parent_site]}\"",
       "-ApplicationPool \"#{@resource[:app_pool]}\"",
       '-Force'
     ]
@@ -75,7 +73,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
     inst_cmd = [
       "#$snap_mod;",
       'Remove-WebApplication',
-      "-Site \"#{@property_hash[:site]}\"",
+      "-Site \"#{@property_hash[:parent_site]}\"",
       "-Name \"#{@property_hash[:name]}\"",
     ]
     resp = Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd.join(' '))
@@ -92,13 +90,13 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
 
   def site=(value)
     @property_flush['appattrs']['ItemXPath'] = value
-    @property_hash[:site] = value
+    @property_hash[:parent_site] = value
   end
 
   def flush
     command_array = [ $snap_mod ]
     @property_flush['appattrs'].each do |appattr, value|
-      command_array << "Set-ItemProperty \"IIS:\\\\Sites\\#{@property_hash[:site]}\\#{@property_hash[:name]}\" #{appattr} #{value}"
+      command_array << "Set-ItemProperty \"IIS:\\\\Sites\\#{@property_hash[:parent_site]}\\#{@property_hash[:name]}\" #{appattr} #{value}"
     end
     resp = Puppet::Type::Iis_app::ProviderPowershell.run(command_array.join('; '))
     raise(resp) unless resp.empty?
