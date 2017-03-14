@@ -123,15 +123,16 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       end
     end
 
-    # Add all the new/updated processModel attrs to the processModel_switches array, and add a single switch for all of them to the create_switches array.
-    if @resource[:identitytype] == :"3" || @resource[:identitytype] == :specificUser
-      Puppet::Type::Iis_pool::ProviderPowershell.processModel.each do |processModel, value|
-        processModel_switches << "#{value}=\"#{@resource[processModel]}\"" if @resource[processModel]
-      end
+    # Set the IdentityType, Identity (if req) and IndentityPassword (if req).
+    if @resource[:identitytype] == (:"3" || :SpecificUser)
+      create_switches << "\$pool = Get-Item \"IIS:\\\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\""
+      create_switches << "; \$pool.processModel.username = \"#{@resource[:identity]}\"" if @resource[:identity]
+      create_switches << "; \$pool.processModel.password = \"#{@resource[:identitypassword]}\"" if @resource[:identitypassword]
+      create_switches << "; \$pool | Set-Item"
+    else
+      create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name 'processModel' -Value \"@{identityType=\"#{@resource[:identitytype]}\"}\"" if @resource[:identitytype]
     end
-    processModel_value = processModel_switches.join(';')
-    create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name 'processModel' -Value \"@{#{processModel_value}}\""
-    
+
     # Add all the new/updated recycling attrs to the recycling_switches array, and then add a single switch to the create_switches array to set them all.
     Puppet::Type::Iis_pool::ProviderPowershell.recycling.each do |recycle, value|
       recycling_switches << "#{value}=\"#{@resource[recycle]}\"" if @resource[recycle]
