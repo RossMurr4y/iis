@@ -35,10 +35,12 @@ Puppet::Type.newtype(:iis_pool) do
 
   newproperty(:pipeline) do
     desc 'The Pipeline mode to use. Values are 0 (Integrated) or 1 (Classic).'
-    newvalues(:"0", :"1")
-    aliasvalue(:Integrated, :"0")
-    aliasvalue(:Classic, :"1")
-    #defaultto :"0"
+    newvalues(:Integrated, :integrated, :Classic, :classic)
+    munge do |value|
+      value.capitalize
+    end
+    aliasvalue(:"0", :Integrated)
+    aliasvalue(:"1", :Classic)
   end
 
   newproperty(:identity) do
