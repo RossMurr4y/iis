@@ -31,8 +31,11 @@ Puppet::Type.newtype(:iis_site) do
 
   newproperty(:state) do
     desc 'The state to enforce upon the Site.'
-    newvalues(:stopped, :started)
-    defaultto :started
+    munge do |value|
+      value.capitalize
+    end
+    newvalues(:stopped, :Stopped, :started, :Started)
+    defaultto :Started
   end
 
   newproperty(:app_pool) do
