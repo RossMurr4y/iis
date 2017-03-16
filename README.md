@@ -97,24 +97,24 @@ iis_pool { 'TestPool':
 
 |Property   | Description|
 |-----------|-------------|
-**state:**               | Stopped, Started. Defaults to Started.
-**enable_32bit:**        | true, false.
-**runtime:**             | v4.0, v2.0, nil.
-**pipeline:**            | Integrated, Classic, 0 (Integrated), 1 (Classic)
-**identitytype:**        | LocalSystem (or 0), LocalService (or 1), 
-                         |  NetworkService (or 2), 
-                         |  SpecificUser (or 3), 
-                         |  ApplicationPoolIdentity (or 4)
-**identity:**            | Must match regex: %r{^[a-zA-Z0-9\\\-\_\@\.\s]+$} Can Start with a DOMAIN.
-**identitypassword:**    | No validation. Please don't just use plaintext. Use hiera and/or EYAML.
-**startmode:**           | OnDemand, AlwaysRunning, true, false.
-**rapidfailprotection:** | true, false.
-**idletimeout:**         | Integer. 
-**idletimeoutaction:**   | Suspend, Terminate.
-**maxprocesses:**        | Integer.
-**maxqueue:**            | Integer.
-**recyclemins:**         | Integer.
-**recyclesched:**        | String in the format of "HH:MM:SS"
+|**state:**               | Stopped, Started. Defaults to Started.|
+|**enable_32bit:**        | true, false.|
+|**runtime:**             | v4.0, v2.0, nil.|
+|**pipeline:**            | Integrated, Classic, 0 (Integrated), 1 (Classic)|
+|**identitytype:**        | LocalSystem (or 0), LocalService (or 1),| 
+|                         |  NetworkService (or 2),| 
+|                         |  SpecificUser (or 3), |
+|                         |  ApplicationPoolIdentity (or 4)|
+|**identity:**            | Must match regex: %r{^[a-zA-Z0-9\\\-\_\@\.\s]+$} Can Start with a DOMAIN.|
+|**identitypassword:**    | No validation. Please don't just use plaintext. Use hiera and/or EYAML.|
+|**startmode:**           | OnDemand, AlwaysRunning, true, false.|
+|**rapidfailprotection:** | true, false.|
+|**idletimeout:**         | Integer. |
+|**idletimeoutaction:**   | Suspend, Terminate.|
+|**maxprocesses:**        | Integer.|
+|**maxqueue:**            | Integer.|
+|**recyclemins:**         | Integer.|
+|**recyclesched:**        | String in the format of "HH:MM:SS"|
 
 ### iis_app
 
