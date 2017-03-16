@@ -58,7 +58,7 @@ iis_site { 'TestWebsite':
 #### Attribute Values for iis_site
 
 |Property        | Description|
------------------------------
+|----------------|------------|
 **path:**       | must be an absolute filepath.
 **state:**      | stopped, started. Defaults to started.
 **app_pool:**   | Must match against the following regex (Defaults to 'DefaultAppPool'): %r{[a-zA-Z0-9\-\_\'\s]+$}
@@ -95,16 +95,16 @@ iis_pool { 'TestPool':
 
 #### Attribute Values for iis_pool
 
-|Property                 | Description|
-----------------------------------------
+|Property   | Description|
+|-----------|-------------|
 **state:**               | Stopped, Started. Defaults to Started.
 **enable_32bit:**        | true, false.
 **runtime:**             | v4.0, v2.0, nil.
 **pipeline:**            | Integrated, Classic, 0 (Integrated), 1 (Classic)
 **identitytype:**        | LocalSystem (or 0), LocalService (or 1), 
-                           NetworkService (or 2), 
-                           SpecificUser (or 3), 
-                           ApplicationPoolIdentity (or 4)
+                         |  NetworkService (or 2), 
+                         |  SpecificUser (or 3), 
+                         |  ApplicationPoolIdentity (or 4)
 **identity:**            | Must match regex: %r{^[a-zA-Z0-9\\\-\_\@\.\s]+$} Can Start with a DOMAIN.
 **identitypassword:**    | No validation. Please don't just use plaintext. Use hiera and/or EYAML.
 **startmode:**           | OnDemand, AlwaysRunning, true, false.
@@ -132,7 +132,7 @@ iis_app { 'D:\inetpub\content\MyTestSite\MyTestApp':
 #### Attribute Values for iis_app
 
 |Property      | Description|
------------------------------
+|--------------|------------|
 **physicalpath:** | Must be an absolute filepath. This is also the namevar, so title your resource accordingly (see example above). This is to prevent duplicate resource names on a server hosting many Web Apps.
 **app_pool:**     | Must match against regex: %r{[a-zA-Z0-9\-\_'\s]+$}. Defaults to DefaultAppPool.
 **parent_site:**  | Must match against regex: %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}.
@@ -151,7 +151,7 @@ iis_vdir { '/MyTestVDir':
 #### Attribute Values for iis_vdir
 
 |Property     | Description|
-----------------------------
+|-------------|------------|
 parent_site: | Must match against regex: %r{^[a-zA-Z0-9\-\_\/\s]+$}
 path:        | Must be a fully qualified filepath.
 
