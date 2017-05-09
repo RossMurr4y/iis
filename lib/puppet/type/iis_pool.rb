@@ -26,6 +26,9 @@ Puppet::Type.newtype(:iis_pool) do
   newproperty(:enable_32bit) do
     desc 'A Boolean to determine if 32bit mode should enabled.'
     newvalues(false, true)
+    munge do |value|
+      value.to_s
+    end
   end
 
   newproperty(:runtime) do
