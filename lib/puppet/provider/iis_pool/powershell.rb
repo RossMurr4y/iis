@@ -174,9 +174,9 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       if @resource[property] != value
         Puppet.debug "Setting Property Hash #{@property_hash[property.to_sym]} to #{value}"
         @property_flush['poolattrs'][property.to_sym] = value
+        Puppet.debug "Property hash #{property} is #{@property_hash[property.to_sym]}"
+        @property_hash[property.to_sym] = value
       end
-      @property_hash[property.to_sym] = value
-      Puppet.debug "Property hash #{property} is #{@property_hash[property.to_sym]}"
     end
   end
 
