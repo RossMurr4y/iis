@@ -1,5 +1,4 @@
 Puppet::Type.newtype(:iis_pool) do
-  require 'puppet/parameter/boolean'
 
   desc 'An IIS Application Pool resource type.'
   ensurable
@@ -26,14 +25,14 @@ Puppet::Type.newtype(:iis_pool) do
 
   newproperty(:enable_32bit) do
     desc 'A Boolean to determine if 32bit mode should enabled.'
-    newvalues(:false, :true, :False, :True)
+    newvalues(:false, :true, :False, :True, false, true)
     munge do |value|
-      def true?(value)
-      #munge to lowercase string and test its value. Output result as bool
-        value.to_s.downcase == "true"
+      if value.to_s == 'true' || :True || :true
+        true
+      elsif value.to_s == 'false' || :False || :false
+        false
       end
     end
-    #defaultto :false
   end
 
   newproperty(:runtime) do
