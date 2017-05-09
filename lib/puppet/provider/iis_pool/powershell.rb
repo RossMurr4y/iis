@@ -171,8 +171,10 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |property, poolattr|
     define_method "#{property}=" do |value|
-      @property_flush['poolattrs'][property.to_sym] = value
-      Puppet.debug "Setting Property Hash #{@property_hash[property.to_sym]} to #{value}"
+      if @resource[property_name] != value
+        Puppet.debug "Setting Property Hash #{@property_hash[property.to_sym]} to #{value}"
+        @property_flush['poolattrs'][property.to_sym] = value
+      end
       @property_hash[property.to_sym] = value
       Puppet.debug "Property hash #{property} is #{@property_hash[property.to_sym]}"
     end
