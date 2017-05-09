@@ -28,7 +28,8 @@ Puppet::Type.newtype(:iis_pool) do
     desc 'A Boolean to determine if 32bit mode should enabled.'
     newvalues(:false, :true, :False, :True)
     munge do |value|
-      !!value
+      #munge to lowercase string and test its value. Output result as bool
+      value.to_s.downcase == "true"
     end
     #defaultto :false
   end
