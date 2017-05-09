@@ -27,9 +27,9 @@ Puppet::Type.newtype(:iis_pool) do
     desc 'A Boolean to determine if 32bit mode should enabled.'
     newvalues(:false, :true, :False, :True, false, true)
     munge do |value|
-      if value.to_s == 'true' || :True || :true
+      if ["true", :True, :true].include? value.to_s
         true
-      elsif value.to_s == 'false' || :False || :false
+      else
         false
       end
     end
