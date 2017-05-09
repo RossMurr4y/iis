@@ -34,7 +34,7 @@ Puppet::Type.newtype(:iis_site) do
     munge do |value|
       value.capitalize
     end
-    newvalues(:stopped, :Stopped, :started, :Started)
+    newvalues(:Stopped, :Started)
     defaultto :Started
   end
 
