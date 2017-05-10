@@ -232,7 +232,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       property_name = Puppet::Type::Iis_pool::ProviderPowershell.poolattrs[poolattr]
       # Skip the state poolattr, we'll do it last.
       next if property_name == 'state'
-      command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name #{property_name} -Value #{value}"
+      command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name #{property_name} -Value #{value}" unless @resource[poolattr] == value
     end
     
     # Check to see if the IdentityType is changing.
