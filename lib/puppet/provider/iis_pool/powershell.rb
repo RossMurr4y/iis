@@ -176,9 +176,9 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |property, poolattr|
     define_method "#{property}=" do |value|
       unless @resource[property] == value
-        @property_flush['poolattrs'][property] = value
+        @property_flush['poolattrs'][property] = value.to_s
         Puppet.debug "Setting Property Flush #{@property_flush[property]} to #{value}"
-        @property_hash[property] = value 
+        @property_hash[property] = value.to_s 
         Puppet.debug "Property hash #{property} is #{@property_hash[property]}"
       end
     end
