@@ -133,7 +133,9 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     #  create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name 'processModel' -Value \"@{identityType=\"#{@resource[:identitytype]}\"}\"" if @resource[:identitytype]
     #end
     if @resource[:identitytype] == (:"3" || :SpecificUser) 
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\";\$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"  
+      # Set SpecificUser and then only after its applied attempt to set Identity/Password. Applying both at once doesn't work.
+      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"  
+      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\"; \$pool | set-item"
     else
       create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
     end
