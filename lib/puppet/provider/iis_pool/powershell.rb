@@ -175,10 +175,12 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |property, poolattr|
     define_method "#{property}=" do |value|
-      @property_flush['poolattrs'][property] = value
-      Puppet.debug "Setting Property Hash #{@property_hash[property.to_sym]} to #{value}"
-      @property_hash[property] = value
-      Puppet.debug "Property hash #{property} is #{@property_hash[property.to_sym]}"
+      unless @resource[poolattr] == value do
+        @property_flush['poolattrs'][property] = value
+        Puppet.debug "Setting Property Flush #{@property_flush[property]} to #{value}"
+        @property_hash[property] = value 
+        Puppet.debug "Property hash #{property} is #{@property_hash[property]}"
+      end
     end
   end
 
@@ -232,7 +234,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       property_name = Puppet::Type::Iis_pool::ProviderPowershell.poolattrs[poolattr]
       # Skip the state poolattr, we'll do it last.
       next if property_name == 'state'
-      command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name #{property_name} -Value #{value}" unless @resource[poolattr] == value
+      command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name #{property_name} -Value #{value}" 
     end
     
     # Check to see if the IdentityType is changing.
