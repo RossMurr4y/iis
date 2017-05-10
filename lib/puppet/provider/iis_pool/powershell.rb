@@ -150,6 +150,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     
     # Put it all together, then execute it.
     inst_cmd = create_switches.join(';')
+    Puppet.debug "Creating App Pool with the following command:"
+    Puppet.debug "#{inst_cmd}"
     resp = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
 
     @resource.original_parameters.each_key do |k|
