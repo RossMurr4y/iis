@@ -123,21 +123,12 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       end
     end
 
-    # Set the IdentityType, Identity (if req) and IndentityPassword (if req).
-    #if @resource[:identitytype] == (:"3" || :SpecificUser)
-    #  create_switches << "\$pool = Get-Item \"IIS:\\\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\""
-    #  create_switches << "; \$pool.processModel.username = \"#{@resource[:identity]}\"" #if @resource[:identity]
-    #  create_switches << "; \$pool.processModel.password = \"#{@resource[:identitypassword]}\"" #if @resource[:identitypassword]
-    #  create_switches << "; \$pool | Set-Item"
-    #else
-    #  create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name 'processModel' -Value \"@{identityType=\"#{@resource[:identitytype]}\"}\"" if @resource[:identitytype]
-    #end
-    if @resource[:identitytype] == (:"3" || :SpecificUser) 
-      # Set SpecificUser and then only after its applied attempt to set Identity/Password. Applying both at once doesn't work.
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"  
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\"; \$pool | set-item"
+    if @resource[:identitytype] == :SpecificUser
+      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\";\$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"  
+      Puppet.debug "IdentityType is set to SpecificUser. Setting Identity Values"
     else
       create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
+      Puppet.debug "IdentityType is NOT set to Specific User. Setting only IdentityType"
     end
 
     # Add all the new/updated recycling attrs to the recycling_switches array, and then add a single switch to the create_switches array to set them all.
