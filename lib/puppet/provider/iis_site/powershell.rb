@@ -5,7 +5,12 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
   confine :operatingsystem => :windows
   confine :powershell_version => [:"5.0", :"4.0", :"3.0"]
   
-  $snap_mod = "$psver = [int]$PSVersionTable.PSVersion.Major; If($psver -lt 4){Add-PSSnapin WebAdministration}else{Import-Module WebAdministration}"
+  # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
+  if Facter.value(:os)['release']['major'] != '2008'
+    $snap_mod = 'Import-Module WebAdministration'
+  else
+    $snap_mod = 'Add-PSSnapin WebAdministration'
+  end
 
   mk_resource_methods
 
