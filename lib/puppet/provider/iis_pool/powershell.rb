@@ -243,7 +243,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
         end
 
       # We either set for a SpecificUser (3) with creds, or we set only the identityType. 
-      if identitytype_value == (:SpecificUser || :"3")
+      if identitytype_value == :SpecificUser
         username_value =
           if @property_flush.key?(:identity)
             @property_flush['processModel'][:identity]
