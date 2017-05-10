@@ -8,7 +8,15 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   mk_resource_methods
 
   # snap_mod global variable decides whether to import the WebAdministration module, or add the WebAdministration snap-in.
-  $snap_mod = "$psver = [int]$PSVersionTable.PSVersion.Major; If($psver -lt 4){Add-PSSnapin WebAdministration}else{Import-Module WebAdministration}"
+  #$snap_mod = "$psver = [int]$PSVersionTable.PSVersion.Major; If($psver -lt 4){Add-PSSnapin WebAdministration}else{Import-Module WebAdministration}"
+
+  if Facter.value(:operatingsystemmajrelease) != '2008'
+    $snap_mod = 'Import-Module WebAdministration'
+  else
+    $snap_mod = 'Add-PSSnapin WebAdministration'
+  end
+
+
 
   # In Powershell 3 where we are using the WebAdministration SnapIn, 
   # StartMode doesn't exist and AutoStart is used instead, but is a bool.
