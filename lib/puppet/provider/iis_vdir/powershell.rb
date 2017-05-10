@@ -4,10 +4,13 @@ require 'json'
 Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::Iispowershell) do
   confine :operatingsystem => :windows
 
+  # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
+  if Facter.value('os.release.major') != '2008'
+    $snap_mod = 'Import-Module WebAdministration'
+  else
+    $snap_mod = 'Add-PSSnapin WebAdministration'
+  end
 
-  # snap_mod global variable decides whether to import the WebAdministration module, or add the WebAdministration snap-in.
-  $snap_mod = "$psver = [int]$PSVersionTable.PSVersion.Major; If($psver -lt 4){Add-PSSnapin WebAdministration}else{Import-Module WebAdministration}"
-  
   mk_resource_methods
 
   def initialize(value = {})
