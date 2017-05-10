@@ -24,8 +24,15 @@ Puppet::Type.newtype(:iis_pool) do
 
   newproperty(:enable_32bit) do
     desc 'A Boolean to determine if 32bit mode should enabled. Defaults to false.'
-    newvalues(:false, :true)
-    #defaultto :false
+    newvalues(false, true)
+    aliasvalue(:False, false)
+    aliasvalue(:false, false)
+    aliasvalue('False', false)
+    aliasvalue('false', false)
+    aliasvalue(:true, true)
+    aliasvalue(:True, true)
+    aliasvalue('True', true)
+    aliasvalue('true', true)
   end
 
   newproperty(:runtime) do
