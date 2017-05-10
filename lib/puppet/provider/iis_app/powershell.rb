@@ -13,7 +13,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
   end
 
   # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
-  if Facter.value('os.release.major') != '2008'
+  if Facter.value(:os)[release][major] != '2008'
     $snap_mod = 'Import-Module WebAdministration'
   else
     $snap_mod = 'Add-PSSnapin WebAdministration'
