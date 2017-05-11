@@ -36,8 +36,9 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
     app_json = if apps_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
                else
-                 [JSON.parse(apps_listed)]
+                 JSON.parse(apps_listed)
                end
+    app_json = [app_json] if app_json.is_a?(Hash)           
     app_json.map do |app|
       app_hash                = {}
       app_hash[:ensure]       = :present

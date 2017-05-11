@@ -85,8 +85,9 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     pool_json = if pools_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
                else
-                 [JSON.parse(pools_listed)]
+                 JSON.parse(pools_listed)
                end
+    pool_json = [pool_json] if pool_json.is_a?(Hash)
     pool_json.map do |pool|
       pool_hash = {}
       pool_hash[:ensure]                = :present

@@ -28,8 +28,9 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     site_json = if sites_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
                else
-                 [JSON.parse(sites_listed)]
+                 JSON.parse(sites_listed)
                end
+    site_json = [site_json] if site_json.is_a?(Hash)
     site_json.map do |site|
       site_hash               = {}
       site_hash[:ensure]      = :present
