@@ -81,9 +81,13 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   def self.instances
 
     inst_cmd = "#$snap_mod; Get-ChildItem 'IIS:\\AppPools\' | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, #$startMode_autoStart, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
-    pool_names = JSON.parse(Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd))
-    pool_names = [pool_names] if pool_names.is_a?(Hash)
-    pool_names.map do |pool|
+    pools_listed = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
+    pool_json = if pools_listed == ''
+                 [] # https://github.com/RossMurr4y/iis/issues/7
+               else
+                 JSON.parse(pools_listed)
+               end
+    pool_json.map do |pool|
       pool_hash = {}
       pool_hash[:ensure]                = :present
       pool_hash[:name]                  = pool['name']

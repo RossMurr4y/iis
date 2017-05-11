@@ -34,11 +34,10 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
     inst_cmd = "#$snap_mod; Get-WebApplication | Select path, physicalPath, applicationPool, ItemXPath | ConvertTo-JSON -Depth 4"
     apps_listed = Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd)
     app_json = if apps_listed == ''
-                 []
+                 [] # https://github.com/RossMurr4y/iis/issues/7
                else
                  JSON.parse(apps_listed)
                end
-    # app_json = [app_json] if app_json.is_a?(Hash)
     app_json.map do |app|
       app_hash                = {}
       app_hash[:ensure]       = :present

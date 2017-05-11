@@ -24,8 +24,12 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.instances
     inst_cmd = "#$snap_mod;Get-ChildItem 'IIS:\\sites' | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
-    site_json = JSON.parse(Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd))
-    site_json = [site_json] if site_json.is_a?(Hash)
+    sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
+    site_json = if sites_listed == ''
+                 [] # https://github.com/RossMurr4y/iis/issues/7
+               else
+                 JSON.parse(sites_listed)
+               end
     site_json.map do |site|
       site_hash               = {}
       site_hash[:ensure]      = :present
