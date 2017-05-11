@@ -38,6 +38,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
                 else
                   JSON.parse(dirs_listed)
                 end
+    vdir_json = [vdir_json] if vdir_json.is_a?(Hash)
     vdir_json.each do |dir|
       dir_hash               = {}
       dir_hash[:name]        = dir['path'].gsub(%r{^\/}, '')
