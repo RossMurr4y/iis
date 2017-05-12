@@ -80,7 +80,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.instances
 
-    inst_cmd = "$snap_mod; Get-ChildItem 'IIS:\\AppPools\' | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, startMode_autoStart, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
+    inst_cmd = "#{$snap_mod}; Get-ChildItem 'IIS:\\AppPools\' | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, startMode_autoStart, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
     pools_listed = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     pool_json = if pools_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
@@ -132,30 +132,30 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       end
     end
 
-    if @resource[:identitytype] == :SpecificUser
-      # Seperated this into two stages due to issues with Win2008 Setting IdentityType at the same time as username/pwd.
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\"; \$pool | set-item"  
-      Puppet.debug "IdentityType is set to SpecificUser. Setting Identity Values"
-    else
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
-      Puppet.debug "IdentityType is NOT set to Specific User. Setting only IdentityType"
-    end
+    #if @resource[:identitytype] == :SpecificUser
+    #  # Seperated this into two stages due to issues with Win2008 Setting IdentityType at the same time as username/pwd.
+    #  create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
+    #  create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\"; \$pool | set-item"  
+    #  Puppet.debug "IdentityType is set to SpecificUser. Setting Identity Values"
+    #else
+    #  create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
+    #  Puppet.debug "IdentityType is NOT set to Specific User. Setting only IdentityType"
+    #end
 
     # Add all the new/updated recycling attrs to the recycling_switches array, and then add a single switch to the create_switches array to set them all.
-    Puppet::Type::Iis_pool::ProviderPowershell.recycling.each do |recycle, value|
-      recycling_switches << "#{value}=\"#{@resource[recycle]}\"" if @resource[recycle]
-    end
-    recycling_value = recycling_switches.join(';')
-    create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name recycling -Value @{#{recycling_value}}"
+    #Puppet::Type::Iis_pool::ProviderPowershell.recycling.each do |recycle, value|
+    #  recycling_switches << "#{value}=\"#{@resource[recycle]}\"" if @resource[recycle]
+    #end
+    #recycling_value = recycling_switches.join(';')
+    #create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name recycling -Value @{#{recycling_value}}"
 
     # Add the single failure switch to the create_switches array, if it exists in the property_hash
     # Setting this up as a loop of the array incase we add further attrs from failure.attributes 
-    Puppet::Type::Iis_pool::ProviderPowershell.failure.each do |failure, value|
-      failure_switches << "#{value}=\"#{@resource[failure]}\"" if @resource[failure]
-    end
-    failure_value = failure_switches.join(';')
-    create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name failure.rapidFailProtection -Value @{#{recycling_value}}"
+    #Puppet::Type::Iis_pool::ProviderPowershell.failure.each do |failure, value|
+    #  failure_switches << "#{value}=\"#{@resource[failure]}\"" if @resource[failure]
+    #end
+    #failure_value = failure_switches.join(';')
+    #create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name failure.rapidFailProtection -Value @{#{recycling_value}}"
     
     # Put it all together, then execute it.
     inst_cmd = create_switches.join(';')
@@ -172,7 +172,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def destroy
-    inst_cmd = "$snap_mod; Remove-WebAppPool -Name \"#{@resource[:name]}\""
+    inst_cmd = "#{$snap_mod}; Remove-WebAppPool -Name \"#{@resource[:name]}\""
     resp = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     raise(resp) unless resp.empty?
 
