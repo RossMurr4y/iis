@@ -206,12 +206,12 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     command_array << "#{$snap_mod}; \$pool = Get-Item \"IIS:\\\\AppPools\\#{@property_hash[:name]}\"" if @property_flush
 
     # poolAttrs
-    @property_flush['poolattrs'].each do |key, value|
+    @property_flush['poolattrs'].each do |poolattr, value|
       property_name = Puppet::Type::Iis_pool::ProviderPowershell.poolattrs[poolattr]
       # Skip the state poolattr, we'll do it last.
       next if property_name == 'state'
-      command_array << "\$pool.poolattrs.#{value} = \"#{@property_flush['poolattrs'][key]}\"" if @property_flush['poolattrs'][key]
-      Puppet.debug "Flushing poolattrs.#{value} and setting as \"#{@property_flush['poolattrs'][key]}\" "
+      command_array << "\$pool.poolattrs.#{value} = \"#{@property_flush['poolattrs'][poolattr]}\"" if @property_flush['poolattrs'][key]
+      Puppet.debug "Flushing poolattrs.#{value} and setting as \"#{@property_flush['poolattrs'][poolattr]}\" "
     end
 
     # processModel
