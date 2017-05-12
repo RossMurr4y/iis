@@ -210,14 +210,14 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       property_name = Puppet::Type::Iis_pool::ProviderPowershell.poolattrs[poolattr]
       # Skip the state poolattr, we'll do it last.
       next if property_name == 'state'
-      command_array << "\$pool.poolattrs.#{value} = \"#{@property_flush['poolattrs'][poolattr]}\"" if @property_flush['poolattrs'][key]
+      command_array << "\$pool.poolattrs.#{value} = \"#{@property_flush['poolattrs'][poolattr]}\"" if @property_flush['poolattrs'][poolattr]
       Puppet.debug "Flushing poolattrs.#{value} and setting as \"#{@property_flush['poolattrs'][poolattr]}\" "
     end
 
     # processModel
-    @property_flush['processModel'].each do |key, value|
-      next if key == :idletimeout
-      command_array << "\$pool.processModel.#{value} = \"#{@property_flush['processModel'][key]}\"" if @property_flush['processModel'][key]
+    @property_flush['processModel'].each do |proc, value|
+      next if proc == :idletimeout
+      command_array << "\$pool.processModel.#{value} = \"#{@property_flush['processModel'][proc]}\"" if @property_flush['processModel'][proc]
     end
     command_array << "\$ts = New-Timespan -Minutes #{@property_flush['processModel'][:idletimeout]}; Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -name processModel -value @{idletimeout=\$ts}" if @property_flush['processModel'][:idletimeout]
 
