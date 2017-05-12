@@ -29,14 +29,14 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       :runtime             => 'managedRuntimeVersion',
       :pipeline            => 'managedPipelineMode',
       :startmode           => $startMode_autoStart,
-      :maxqueue            => 'queueLength'
-      :rapidfailprotection => 'failure.rapidFailProtection'
+      :maxqueue            => 'queueLength',
+      :rapidfailprotection => 'failure.rapidFailProtection',
       :identitytype        => 'processModel.identityType',
       :identity            => 'processModel.userName',
       :identitypassword    => 'processModel.password',
       :idletimeout         => 'processModel.idleTimeout.Minutes',
       :idletimeoutaction   => 'processModel.idleTimeoutAction',
-      :maxprocesses        => 'processModel.maxProcesses'
+      :maxprocesses        => 'processModel.maxProcesses',
       :recyclemins         => 'recycling.periodicRestart.time.TotalMinutes',
       :recyclesched        => 'recycling.periodicRestart.schedule.collection',
       :recyclelogging      => 'recycling.logEventOnRecycle',
@@ -181,5 +181,5 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       raise(e)
     end
   end
-  
+
 end
