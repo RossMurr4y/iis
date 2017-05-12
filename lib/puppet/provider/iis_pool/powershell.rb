@@ -133,7 +133,9 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     end
 
     if @resource[:identitytype] == :SpecificUser
-      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\";\$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"  
+      # Seperated this into two stages due to issues with Win2008 Setting IdentityType at the same time as username/pwd.
+      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
+      create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\"; \$pool | set-item"  
       Puppet.debug "IdentityType is set to SpecificUser. Setting Identity Values"
     else
       create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
