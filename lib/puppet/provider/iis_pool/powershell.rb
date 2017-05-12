@@ -125,9 +125,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
     # If any of the poolattrs exist in the property_hash, add them to the array of switches
     Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |poolattr, value|
-      if @resource[poolattr]
-        create_switches << "\$pool.poolattrs.#{value} = \"#{@resource[poolattr]}\"" if @resource['poolattrs'][key]
-        #create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" \"#{value}\" \"#{@resource[poolattr]}\""
+      if @resource[value]
+        create_switches << "\$pool.poolattrs.#{value} = \"#{@resource[poolattr]}\"" if @resource['poolattrs'][poolattr]
       end
     end
     
