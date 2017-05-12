@@ -158,10 +158,11 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       "\$pool = Get-Item \"IIS:\\AppPools\\#{@resource[:name]}\""
     ]
 
-    @property_flush.each do |type_param, ps_property|
+    @property_flush.each do |type_param, value|
       next if type_param == :state
-      Puppet.debug "Flush type_param: #{ps_property} being set to: \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
-      command_array << "\$pool.#{ps_property} = \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
+      attribute = Puppet::Type::Iis_pool::ProviderPowershell.poolattributes[type_param]
+      Puppet.debug "Flush type_param: #{attribute} being set to: \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
+      command_array << "\$pool.#{attribute} = \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
     end
 
     command_array << "\$ts = New-Timespan -Minutes #{@property_flush[:idletimeout]}; Set-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -name processModel -value @{idletimeout=\$ts}" if @property_flush[:idletimeout]
