@@ -48,7 +48,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       :state        => 'state',
       :runtime      => 'managedRuntimeVersion',
       :pipeline     => 'managedPipelineMode',
-      :startmode    => "#$startMode_autoStart",
+      :startmode    => "startMode_autoStart",
       :maxqueue     => 'queueLength'
     }
   end
@@ -80,7 +80,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.instances
 
-    inst_cmd = "#$snap_mod; Get-ChildItem 'IIS:\\AppPools\' | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, #$startMode_autoStart, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
+    inst_cmd = "$snap_mod; Get-ChildItem 'IIS:\\AppPools\' | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, startMode_autoStart, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
     pools_listed = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     pool_json = if pools_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
@@ -96,7 +96,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       pool_hash[:enable_32bit]          = pool['enable32BitAppOnWin64']
       pool_hash[:runtime]               = pool['managedRuntimeVersion']
       pool_hash[:pipeline]              = pool['managedPipelineMode']
-      pool_hash[:startmode]             = pool["#$startMode_autoStart"]
+      pool_hash[:startmode]             = pool['startMode_autoStart']
       pool_hash[:maxqueue]              = pool['queueLength']
       pool_hash[:rapidfailprotection]   = pool['failure']['rapidFailProtection']
       pool_hash[:idletimeout]           = pool['processModel']['idleTimeout']['Minutes']
@@ -170,7 +170,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def destroy
-    inst_cmd = "#$snap_mod; Remove-WebAppPool -Name \"#{@resource[:name]}\""
+    inst_cmd = "$snap_mod; Remove-WebAppPool -Name \"#{@resource[:name]}\""
     resp = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     raise(resp) unless resp.empty?
 
@@ -241,7 +241,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     end
     
     # Check to see if the IdentityType is changing.
-    Puppet.debug "teseting if the processmodel flush works"
+    Puppet.debug "testing if the processmodel flush works"
     if @property_flush['processModel'].keys.any? { |k| [:identitytype,:identity,:identitypassword].include?(k) }
       Puppet.debug "the key section of processmodel flush works"
       identitytype_value =
