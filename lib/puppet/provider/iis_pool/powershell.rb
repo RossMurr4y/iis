@@ -125,13 +125,13 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
     # If any of the poolattrs exist in the property_hash, add them to the array of switches
     Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |poolattr, value|
-      if @property_hash['poolattrs'][value]
+      if @resource[poolattr]
         Puppet.debug "Attempting \$pool.poolattrs.#{value} = \"#{@resource[poolattr]}\""
         create_switches << "\$pool.poolattrs.#{value} = \"#{@resource[poolattr]}\""
       end
     end
     
-    create_switches << "\$pool | Set-Item" if @resource['poolattrs']
+    create_switches << "\$pool | Set-Item"
     inst_cmd = create_switches.join(';')
     Puppet.debug "Creating App Pool with the following command:"
     Puppet.debug "#{inst_cmd}"
