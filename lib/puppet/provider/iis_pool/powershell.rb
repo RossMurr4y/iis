@@ -233,7 +233,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     command_array << "\$pool | Set-Item"
 
     # Change of State.
-    if @property_flush['poolattrs']['state'] == :Started
+    if @property_flush['poolattrs']['state'].to_s == 'Started'
       command_array << "Start-WebAppPool -Name \"#{@property_hash[:name]}\""
     else
       command_array << "Stop-WebAppPool -Name \"#{@property_hash[:name]}\""
