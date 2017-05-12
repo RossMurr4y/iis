@@ -120,44 +120,18 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     create_switches = [
       $snap_mod,
       "New-WebAppPool -Name \"#{@resource[:name]}\"",
+      "\$pool = Get-Item \"IIS:\\\\AppPools\\#{@resource[:name]}\""
     ]
-    processModel_switches = []
-    recycling_switches = []
-    failure_switches = []
 
     # If any of the poolattrs exist in the property_hash, add them to the array of switches
     Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |poolattr, value|
       if @resource[poolattr]
-        create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" \"#{value}\" \"#{@resource[poolattr]}\""
+        create_switches << "\$pool.poolattrs.#{value} = \"#{@resource[poolattr]}\"" if @resource['poolattrs'][key]
+        #create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" \"#{value}\" \"#{@resource[poolattr]}\""
       end
     end
-
-    #if @resource[:identitytype] == :SpecificUser
-    #  # Seperated this into two stages due to issues with Win2008 Setting IdentityType at the same time as username/pwd.
-    #  create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
-    #  create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.username = \"#{@resource[:identity]}\";\$pool.processModel.password = \"#{@resource[:identitypassword]}\"; \$pool | set-item"  
-    #  Puppet.debug "IdentityType is set to SpecificUser. Setting Identity Values"
-    #else
-    #  create_switches << "\$pool = get-item \"IIS:\\AppPools\\#{@resource[:name]}\"; \$pool.processModel.identityType = \"#{@resource[:identitytype]}\"; \$pool | set-item"
-    #  Puppet.debug "IdentityType is NOT set to Specific User. Setting only IdentityType"
-    #end
-
-    # Add all the new/updated recycling attrs to the recycling_switches array, and then add a single switch to the create_switches array to set them all.
-    #Puppet::Type::Iis_pool::ProviderPowershell.recycling.each do |recycle, value|
-    #  recycling_switches << "#{value}=\"#{@resource[recycle]}\"" if @resource[recycle]
-    #end
-    #recycling_value = recycling_switches.join(';')
-    #create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name recycling -Value @{#{recycling_value}}"
-
-    # Add the single failure switch to the create_switches array, if it exists in the property_hash
-    # Setting this up as a loop of the array incase we add further attrs from failure.attributes 
-    #Puppet::Type::Iis_pool::ProviderPowershell.failure.each do |failure, value|
-    #  failure_switches << "#{value}=\"#{@resource[failure]}\"" if @resource[failure]
-    #end
-    #failure_value = failure_switches.join(';')
-    #create_switches << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@resource[:name]}\" -Name failure.rapidFailProtection -Value @{#{recycling_value}}"
     
-    # Put it all together, then execute it.
+    create_switches << "\$pool | Set-Item" if @resource['poolattrs']
     inst_cmd = create_switches.join(';')
     Puppet.debug "Creating App Pool with the following command:"
     Puppet.debug "#{inst_cmd}"
@@ -183,9 +157,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   Puppet::Type::Iis_pool::ProviderPowershell.poolattrs.each do |property, poolattr|
     define_method "#{property}=" do |value|
       @property_flush['poolattrs'][property.to_sym] = value
-      Puppet.debug "Setting Property Hash #{@property_hash[property.to_sym]} to #{value}"
       @property_hash[property.to_sym] = value
-      Puppet.debug "Property hash #{property} is #{@property_hash[property.to_sym]}"
     end
   end
 
@@ -228,82 +200,50 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def flush
-    # initialize all the arrays we'll need to make the final flush command string (command_array)
-    processModel_switches = []
-    recycling_switches = []
-    failure_switches = []
-    command_array = [ $snap_mod ]
+    command_array = []
 
-    # Gather all the updated 'poolattrs' and add them to the command_array
-    @property_flush['poolattrs'].each do |poolattr, value|
+    # <pool>
+    command_array << "#{$snap_mod}; \$pool = Get-Item \"IIS:\\\\AppPools\\#{@property_hash[:name]}\"" if @property_flush
+
+    # poolAttrs
+    @property_flush['poolattrs'].each do |key, value|
       property_name = Puppet::Type::Iis_pool::ProviderPowershell.poolattrs[poolattr]
       # Skip the state poolattr, we'll do it last.
       next if property_name == 'state'
-      command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name #{property_name} -Value #{value}"
-    end
-    
-    # Check to see if the IdentityType is changing.
-    Puppet.debug "testing if the processmodel flush works"
-    if @property_flush['processModel'].keys.any? { |k| [:identitytype,:identity,:identitypassword].include?(k) }
-      Puppet.debug "the key section of processmodel flush works"
-      identitytype_value =
-        if @property_flush.key?(:identitytype)
-          @property_flush['processModel'][:identitytype]
-        else
-          @property_hash[:identitytype]
-        end
-
-      # We either set for a SpecificUser (3) with creds, or we set only the identityType. 
-      if identitytype_value == :SpecificUser
-        username_value =
-          if @property_flush.key?(:identity)
-            @property_flush['processModel'][:identity]
-          else
-            @property_hash[:identity]
-          end
-        password_value =
-          if @property_flush.key?(:identitypassword)
-            @property_flush['processModel'][:identitypassword]
-          else
-            @property_hash[:identitypassword]
-          end
-        command_array << "\$pool = get-item IIS:\\AppPools\\#{@property_hash[:name]}; \$pool.processModel.username = \"#{username_value}\";\$pool.processModel.password = \"#{password_value}\";\$pool.processModel.identityType = \"#{identitytype_value}\"; \$pool | set-item"
-      else
-        command_array << "\$pool = get-item IIS:\\AppPools\\#{@property_hash[:name]}; \$pool.processModel.identityType = \"#{identitytype_value}\"; \$pool | set-item"
-      end      
+      command_array << "\$pool.poolattrs.#{value} = \"#{@property_flush['poolattrs'][key]}\"" if @property_flush['poolattrs'][key]
+      Puppet.debug "Flushing poolattrs.#{value} and setting as \"#{@property_flush['poolattrs'][key]}\" "
     end
 
-    #Update the IdleTimeout, IdleTimeoutAction and the maxProcesses if they exist.
+    # processModel
+    @property_flush['processModel'].each do |key, value|
+      next if key == :idletimeout
+      command_array << "\$pool.processModel.#{value} = \"#{@property_flush['processModel'][key]}\"" if @property_flush['processModel'][key]
+    end
     command_array << "\$ts = New-Timespan -Minutes #{@property_flush['processModel'][:idletimeout]}; Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -name processModel -value @{idletimeout=\$ts}" if @property_flush['processModel'][:idletimeout]
-    command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -name processModel -value @{idletimeoutaction=\"#{@property_flush['processModel'][:idletimeoutaction]}\"}" if @property_flush['processModel'][:idletimeoutaction]
-    command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -name processModel -value @{maxprocesses=#{@property_flush['processModel'][:maxprocesses]}}" if @property_flush['processModel'][:maxprocesses]
 
-    # Set all the recycling properties    
-    command_array << "\$ts = New-Timespan -Minutes #{@property_flush['recycling'][:recyclemins]}; Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name recycling.periodicRestart.time -value \$ts;" if @property_flush['recycling'][:recyclemins]
+    # recycling
+    command_array << "\$ts = New-Timespan -Minutes #{@property_flush['recycling'][:recyclemins]}; \$pool.recycling.recyclemins = \$ts" if @property_flush['recycling'][:recyclemins]
     command_array << "[string[]]\$RestartTimes = @(#{@property_flush['recycling'][:recyclesched]}); Clear-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name recycling.periodicRestart.schedule; foreach (\$restartTime in \$RestartTimes){ New-ItemProperty -Path \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name recycling.periodicRestart.schedule -Value @{value=\$restartTime};}" if @property_flush['recycling'][:recyclesched]
-    command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -name recycling -value @{logEventOnRecycle=\"#{@property_flush['recycling'][:recyclelogging]}\"}" if @property_flush['recycling'][:recyclelogging]
-
-
+    command_array << "\$pool.recycling.logEventOnRecycle = \"#{@property_flush['recycling'][:recyclelogging]}\"" if @property_flush['recycling'][:recyclelogging]
     
-    # Gather all the updated 'failure' values, compile them into an array (failure_switches), and then set them simultaneously.
-    # Note: there is currently only one failure property. This is included incase we want to control more failure properties later.
-    @property_flush['failure'].each do |property, value|
-      failure_switches << "#{property}=\"#{value}\""
-    end
-    failure_value = failure_switches.join(';')
-    command_array << "Set-ItemProperty \"IIS:\\\\AppPools\\#{@property_hash[:name]}\" -Name 'failure' -Value @{#{failure_value}}" unless failure_value.empty? || failure_value.nil?
+    # failure
+    command_array << "\$pool.failure.rapidfailprotection = \"#{@property_flush['failure'][:rapidfailprotection]}\"" if @property_flush['failure'][:rapidfailprotection]
 
-    # Queue the change of state if necessary.
-    if @property_flush['poolattrs']['state']
-      state_cmd = "Start-WebAppPool -Name \"#{@property_hash[:name]}\"" if @property_flush['poolattrs']['state'] == :started
-      state_cmd = "Stop-WebAppPool -Name \"#{@property_hash[:name]}\"" if @property_flush['poolattrs']['state'] == :stopped
-      command_array << state_cmd
-    end
+    # </pool>
+    command_array << "\$pool | Set-Item"
 
+    # Change of State.
+    if @property_flush['poolattrs']['state'] == :Started
+      command_array << "Start-WebAppPool -Name \"#{@property_hash[:name]}\""
+    else
+      command_array << "Stop-WebAppPool -Name \"#{@property_hash[:name]}\""
+    end
+    
     # Join the entire flush command string together, then run it.
     inst_cmd = command_array.join('; ')
     begin
-      Puppet.debug "inst_cmd is: #{inst_cmd}"
+      Puppet.debug "Puppet Flush is as follows:"
+      Puppet.debug "#{inst_cmd}"
       Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     rescue Puppet::ExecutionFailure => e
       raise(e)
