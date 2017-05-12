@@ -210,8 +210,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       property_name = Puppet::Type::Iis_pool::ProviderPowershell.poolattrs[poolattr]
       # Skip the state poolattr, we'll do it last.
       next if property_name == 'state'
-      command_array << "\$pool.poolattrs.#{value} = \"#{@property_flush['poolattrs'][poolattr]}\"" if @property_flush['poolattrs'][poolattr]
-      Puppet.debug "Flushing poolattrs.#{value} and setting as \"#{@property_flush['poolattrs'][poolattr]}\" "
+      command_array << "\$pool.poolattrs.#{poolattr} = \"#{@property_flush['poolattrs'][poolattr]}\"" if @property_flush['poolattrs'][poolattr]
+      Puppet.debug "Flushing poolattrs.#{poolattr} and setting as \"#{@property_flush['poolattrs'][poolattr]}\" "
     end
 
     # processModel
