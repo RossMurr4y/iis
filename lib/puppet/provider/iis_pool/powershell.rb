@@ -159,7 +159,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     ]
 
     @property_flush.each do |type_param, ps_property|
-      next if type_parm == :state
+      next if type_param == :state
       Puppet.debug "Flush type_param: #{ps_property} being set to: \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
       command_array << "\$pool.#{ps_property} = \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
     end
