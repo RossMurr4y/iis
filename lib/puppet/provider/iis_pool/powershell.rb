@@ -111,17 +111,37 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   def create
     create_switches = [
       $snap_mod,
-      "New-WebAppPool -Name \"#{@resource[:name]}\"",
-      "\$pool = Get-Item \"IIS:\\AppPools\\#{@resource[:name]}\""
+      "New-WebAppPool -Name \"#{@resource[:name]}\""#,
+      #"\$pool = Get-Item \"IIS:\\AppPools\\#{@resource[:name]}\""
     ]
 
-    Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |attr, value|
-      if @resource[attr]
-        Puppet.debug "Setting Attribute: \$pool.#{value} to value: \"#{@resource[attr]}\""
-        create_switches << "\$pool.#{value} = \"#{@resource[attr]}\""
+    Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |attribute, value|
+      if @resource[attribute]
+        case attribute
+          when :idletimeout, :recyclemins
+            Puppet.debug "Create attribute: #{attribute} being set to: \"#{@resource[attribute]}\""
+            command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value ([TimeSpan]::FromMinutes(#{@resource[attribute]}))"
+          when :recyclesched
+            Puppet.debug "Create type_param: #{attribute} being set to: \"#{@resource[attribute]}\""
+            command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value}"
+            command_array << "[string[]]\$RestartTimes = @(#{@resource[:recyclesched]})"
+            command_array << "ForEach ([Timespan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -Value @{value=\$restartTime};}"
+        else 
+          Puppet.debug "Create type_param: #{attribute} being set to: \"#{@resource[attribute]}\""
+          #command_array << "\$pool.#{attribute} = \"#{@property_flush[type_param]}\""
+          command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{@resource[attribute]}"
+        end
       end
     end
-    create_switches << "\$pool | Set-Item"
+
+    #Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |attr, value|
+    #  if @resource[attr]
+    #    Puppet.debug "Setting Attribute: \$pool.#{value} to value: \"#{@resource[attr]}\""
+    #    create_switches << "\$pool.#{value} = \"#{@resource[attr]}\""
+    #  end
+    #end
+    #create_switches << "\$pool | Set-Item"
+
     inst_cmd = create_switches.join(';')
 
     begin
