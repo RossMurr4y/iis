@@ -189,9 +189,10 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
         attribute = Puppet::Type::Iis_pool::ProviderPowershell.poolattributes[type_param]
         case attribute
           when :idletimeout, :recyclemins
+            Puppet.debug "Flush type_param: #{attribute} being set to: \"#{@property_flush[type_param]}\""
             command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -value ([TimeSpan]::FromMinutes(#{@property_flush[type_param]}))"
           when :recyclesched
-            Puppet.debug "Flush "
+            Puppet.debug "Flush type_param: #{attribute} being set to: \"#{@property_flush[type_param]}\""
             command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute}"
             command_array << "[string[]]\$RestartTimes = @(#{@property_flush[:recyclesched]})"
             command_array << "ForEach ([Timespan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -Value @{value=\$restartTime};}"
@@ -205,7 +206,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     end
 
     # set $pool + start/stop, or clear the array of initializing commands.
-    if command_array > 2
+    if command_array.length > 1
      # command_array << "\$pool | Set-Item"
       command_array << "Start-WebAppPool -Name \"#{@resource[:name]}\"" if @property_flush[:state] == :Started
       command_array << "Stop-WebAppPool -Name \"#{@resource[:name]}\"" if @property_flush[:state] == :Stopped
