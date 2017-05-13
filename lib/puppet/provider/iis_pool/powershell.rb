@@ -109,7 +109,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def create
-    create_switches = [
+    command_array = [
       $snap_mod,
       "New-WebAppPool -Name \"#{@resource[:name]}\""#,
       #"\$pool = Get-Item \"IIS:\\AppPools\\#{@resource[:name]}\""
@@ -142,7 +142,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     #end
     #create_switches << "\$pool | Set-Item"
 
-    inst_cmd = create_switches.join(';')
+    inst_cmd = command_array.join(';')
 
     begin
       Puppet.debug "Create method inst_cmd is: #{inst_cmd}"
