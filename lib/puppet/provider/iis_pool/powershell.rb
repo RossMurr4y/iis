@@ -53,9 +53,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def self.instances
-    properties = ['Name', 'state', 'enable32BitAppOnWin64', 'queueLength', 'managedRuntimeVersion', 'managedPipelineMode', "#{$startMode_autoStart}", 'processModel', 'failure', 'recycling']
-    inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\AppPools\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select @(#{properties})} | ConvertTo-Json -Depth 4 -Compress"
-    
+    inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\AppPools\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, #{$startMode_autoStart}, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
     pools_listed = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     pool_json = if pools_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
