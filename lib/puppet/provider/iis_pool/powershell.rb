@@ -131,8 +131,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
             command_array << "[string[]]\$RestartTimes = @(#{@resource[:recyclesched]})"
             command_array << "ForEach ([Timespan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -Value @{value=\$restartTime};}"
           when :identitytype
-            Puppet.debug "Create type_param: #{attribute} being set to: \"#{identityType_alias}\""
-            command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{identityType_alias}"
+            Puppet.debug "Create type_param: #{attribute} being set to: \"#{$identityType_alias}\""
+            command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{$identityType_alias}"
         else 
           Puppet.debug "Create type_param: #{attribute} being set to: \"#{@resource[attribute]}\""
           command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{@resource[attribute]}"
@@ -173,8 +173,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, ps_prop|
     define_method "#{type_param}=" do |value|
       if type_param == :identitytype
-        @property_flush[:identitytype] = identityType_alias
-        @property_hash[:identitytype] = identityType_alias
+        @property_flush[:identitytype] = $identityType_alias
+        @property_hash[:identitytype] = $identityType_alias
       else
         @property_flush[type_param] = value
         @property_hash[type_param] = value
