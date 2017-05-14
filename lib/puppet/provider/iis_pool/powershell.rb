@@ -66,6 +66,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\AppPools\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, #{$startMode_autoStart}, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
     pools_listed = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     pool_json = if pools_listed == ''
+                 Puppet.debug "self.instances returned an empty hash"
                  [] # https://github.com/RossMurr4y/iis/issues/7
                else
                  Puppet.debug "Pools Listed: #{pools_listed}"
@@ -194,7 +195,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def flush
-    command_array = [$snap_mod]
+    command_array = [ $snap_mod ]
 
     @property_flush.each do |type_param, value|
       if @property_flush[type_param]
