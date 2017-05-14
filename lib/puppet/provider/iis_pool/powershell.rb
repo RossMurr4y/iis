@@ -6,13 +6,24 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   confine :powershell_version => [:"5.0", :"4.0", :"3.0"]
   mk_resource_methods
 
+  # Account for differences in Win2008
   case Facter.value(:os)['release']['major']
     when '2008'
-      $snap_mod = 'Add-PSSnapin WebAdministration'
-      $startMode_autoStart = 'autoStart'
+      $snap_mod = 'Add-PSSnapin WebAdministration' # Use snapin, not module
+      $startMode_autoStart = 'autoStart'           # PS object property uses diff name
+      $identityType_alias =                        
+        case @resource[:identitytype]              # IdentityType must end up as the Int
+          when 0, :LocalSystem then 0              # value (2008 only), but cant make that 
+          when 1, :LocalService then 1             # default as all other OS's convert it
+          when 2, :NetworkService then 2           # to String once its in IIS - which 
+          when 3, :SpecificUser then 3             # prevents resource idempotency
+          when 4, :ApplicationPoolIdentity then 4
+          else then 4
+        end
     else
       $snap_mod = 'Import-Module WebAdministration'
       $startMode_autoStart = 'startMode'
+      $identityType_alias = @resource[:identitytype]
   end
 
   def initialize(value = {})
@@ -91,8 +102,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   def create
     command_array = [
       $snap_mod,
-      "New-WebAppPool -Name \"#{@resource[:name]}\""#,
-      #"\$pool = Get-Item \"IIS:\\AppPools\\#{@resource[:name]}\""
+      "New-WebAppPool -Name \"#{@resource[:name]}\""
     ]
 
     Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |attribute, value|
@@ -118,21 +128,15 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
             command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value}"
             command_array << "[string[]]\$RestartTimes = @(#{@resource[:recyclesched]})"
             command_array << "ForEach ([Timespan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -Value @{value=\$restartTime};}"
+          when :identitytype
+            Puppet.debug "Create type_param: #{attribute} being set to: \"#{identityType_alias}\""
+            command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{identityType_alias}"
         else 
           Puppet.debug "Create type_param: #{attribute} being set to: \"#{@resource[attribute]}\""
-          #command_array << "\$pool.#{attribute} = \"#{@property_flush[type_param]}\""
           command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{@resource[attribute]}"
         end
       end
     end
-
-    #Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |attr, value|
-    #  if @resource[attr]
-    #    Puppet.debug "Setting Attribute: \$pool.#{value} to value: \"#{@resource[attr]}\""
-    #    create_switches << "\$pool.#{value} = \"#{@resource[attr]}\""
-    #  end
-    #end
-    #create_switches << "\$pool | Set-Item"
 
     inst_cmd = command_array.join(';')
 
@@ -166,8 +170,13 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, ps_prop|
     define_method "#{type_param}=" do |value|
-      @property_flush[type_param] = value
-      @property_hash[type_param] = value
+      if type_param == :identitytype
+        @property_flush[:identitytype] = identityType_alias
+        @property_hash[:identitytype] = identityType_alias
+      else
+        @property_flush[type_param] = value
+        @property_hash[type_param] = value
+      end
     end
   end
 
@@ -184,17 +193,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def flush
-    command_array = [
-      $snap_mod#,
-      #"\$pool = Get-Item \"IIS:\\AppPools\\#{@resource[:name]}\""
-    ]
-
-    #@property_flush.each do |type_param, value|
-    #  next if type_param == :state
-    #  attribute = Puppet::Type::Iis_pool::ProviderPowershell.poolattributes[type_param]
-    #  Puppet.debug "Flush type_param: #{attribute} being set to: \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
-    #  command_array << "\$pool.#{attribute} = \"#{@property_flush[type_param]}\"" if @property_flush[type_param]
-    #end
+    command_array = [$snap_mod]
 
     @property_flush.each do |type_param, value|
       if @property_flush[type_param]
@@ -229,9 +228,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       end
     end
 
-    # set $pool + start/stop, or clear the array of initializing commands.
+    # start/stop, or clear the array of initializing commands.
     if command_array.length > 1
-     # command_array << "\$pool | Set-Item"
       command_array << "Start-WebAppPool -Name \"#{@resource[:name]}\"" if @property_flush[:state] == :Started
       command_array << "Stop-WebAppPool -Name \"#{@resource[:name]}\"" if @property_flush[:state] == :Stopped
     else
