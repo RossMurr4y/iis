@@ -5,16 +5,14 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
   confine :operatingsystem => :windows
   confine :powershell_version => [:"5.0", :"4.0", :"3.0"]
   mk_resource_methods
-  
-  $snap_mod = case Facter.value(:os)['release']['major']
-    when '2008' then 'Add-PSSnapin WebAdministration'
-    else 'Import-Module WebAdministration'
-  end
 
-  # startMode property is 'autoStart' in PowerShell3
-  $startMode_autoStart = case Facter.value(:powershell_version)
-    when '3.0' then 'autoStart'
-    else 'startMode'
+  case Facter.value(:os)['release']['major']
+    when '2008'
+      $snap_mod = 'Add-PSSnapin WebAdministration'
+      $startMode_autoStart = 'autoStart'
+    else
+      $snap_mod = 'Import-Module WebAdministration'
+      $startMode_autoStart = 'startMode'
   end
 
   def initialize(value = {})
