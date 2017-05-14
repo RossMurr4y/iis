@@ -18,8 +18,9 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
           when 2, :NetworkService then 2           # to String once its in IIS - which 
           when 3, :SpecificUser then 3             # prevents resource idempotency
           when 4, :ApplicationPoolIdentity then 4
-          else then 4
-        end
+          else 
+              4
+          end
     else
       $snap_mod = 'Import-Module WebAdministration'
       $startMode_autoStart = 'startMode'
