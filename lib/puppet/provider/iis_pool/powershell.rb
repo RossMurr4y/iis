@@ -203,13 +203,13 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
         case attribute
           when :startmode
             if attribute == 'autoStart'
-              boolvalue = true if @property_flush[attribute] == 'OnDemand' || @property_flush[attribute] 'true'
-              boolvalue = false if @property_flush[attribute] == 'AlwaysRunning' || @property_flush[attribute] 'false'
+              boolvalue = true if @property_flush[attribute] == 'OnDemand' || @property_flush[attribute] == 'true'
+              boolvalue = false if @property_flush[attribute] == 'AlwaysRunning' || @property_flush[attribute] == 'false'
               Puppet.debug "Flush StartMode is known as #{attribute} and is being set to #{boolvalue}"
               command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{attribute} -value #{boolvalue}"
             else
-              stringvalue = 'OnDemand' if @property_flush[attribute].to_s == 'true' || @property_flush[attribute] 'OnDemand'
-              stringvalue = 'AlwaysRunning' if @property_flush[attribute].to_s == 'false' || @property_flush[attribute] 'AlwaysRunning'
+              stringvalue = 'OnDemand' if @property_flush[attribute].to_s == 'true' || @property_flush[attribute] == 'OnDemand'
+              stringvalue = 'AlwaysRunning' if @property_flush[attribute].to_s == 'false' || @property_flush[attribute] == 'AlwaysRunning'
               Puppet.debug "Flush StartMode is known as #{attribute} and is being set to #{stringvalue}"
               command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{attribute} -value #{stringvalue}"
             end
