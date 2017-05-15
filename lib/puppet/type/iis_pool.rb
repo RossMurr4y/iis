@@ -82,7 +82,7 @@ Puppet::Type.newtype(:iis_pool) do
       # We'll accept values for both snap-in and module here, and put the logic in the Provider.
       desc 'How the AppPool should be started.'
       newvalues(:true, :false)
-      aliasvalue(:OnDemamd, :true)
+      aliasvalue(:OnDemand, :true)
       aliasvalue(:AlwaysRunning, :false)
       #defaultto :OnDemand
     end
