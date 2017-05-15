@@ -112,12 +112,13 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
     Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, value|
       if @resource[type_param]
+        attribute = Puppet::Type::Iis_pool::ProviderPowershell.poolattributes[type_param]
         case type_param
           when :startmode
             if value == 'autoStart'
               boolvalue = true if @resource[type_param] == 'OnDemand' || @resource[type_param] == 'true'
               boolvalue = false if @resource[type_param] == 'AlwaysRunning' || @resource[type_param] == 'false'
-              Puppet.debug "Create StartMode: known as #{value} and is being set to #{boolvalue}"
+              Puppet.debug "Create StartMode: known as #{value} and is being set to #{boolvalue} and attribute could be #{attribute}"
               command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{boolvalue}"
             else
               stringvalue = 'OnDemand' if @resource[type_param] == 'true' ||  @resource[type_param] == 'OnDemand'
