@@ -117,23 +117,6 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
             command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value}"
             command_array << "[string[]]\$RestartTimes = @(#{@resource[:recyclesched]})"
             command_array << "ForEach ([TimeSpan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -Value @{value=\$restartTime};}"
-          when :identitytype
-            if Facter.value(:os)['release']['major'] == '2008'
-              $identityType_alias =                        
-              case @resource[:identitytype]              # IdentityType must end up as the Int
-              when 0, :LocalSystem then 0                # value (2008 only), but cant make that 
-              when 1, :LocalService then 1               # default as all other OS's convert it
-              when 2, :NetworkService then 2             # to String once its in IIS - which 
-              when 3, :SpecificUser then 3               # prevents resource idempotency
-              when 4, :ApplicationPoolIdentity then 4
-              else 
-                  4
-              end
-            else
-              $identityType_alias = @resource[:identitytype]
-            end
-            Puppet.debug "Create #{type_param}: being set to: \"#{$identityType_alias}\""
-            command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{$identityType_alias}"
         else 
           Puppet.debug "Create #{type_param}: being set to: \"#{@resource[type_param]}\""
           command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{@resource[type_param]}"
@@ -173,27 +156,8 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, ps_prop|
     define_method "#{type_param}=" do |value|
-      if type_param == :identitytype
-        if Facter.value(:os)['release']['major'] == '2008'
-          $identityType_alias =                        
-          case @resource[:identitytype]              # IdentityType must end up as the Int
-          when 0, :LocalSystem then 0                # value (2008 only), but cant make that 
-          when 1, :LocalService then 1               # default as all other OS's convert it
-          when 2, :NetworkService then 2             # to String once its in IIS - which 
-          when 3, :SpecificUser then 3               # prevents resource idempotency
-          when 4, :ApplicationPoolIdentity then 4
-          else 
-              4
-          end
-        else
-          $identityType_alias = @resource[:identitytype]
-        end
-        @property_flush[:identitytype] = $identityType_alias
-        @property_hash[:identitytype] = $identityType_alias
-      else
-        @property_flush[type_param] = value
-        @property_hash[type_param] = value
-      end
+      @property_flush[type_param] = value
+      @property_hash[type_param] = value
     end
   end
 
