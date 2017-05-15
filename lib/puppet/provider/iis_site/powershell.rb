@@ -23,8 +23,13 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def self.instances
-    inst_cmd = "#$snap_mod;Get-ChildItem 'IIS:\\sites' | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
-    site_json = JSON.parse(Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd))
+    inst_cmd = "$snap_mod; Get-ChildItem 'IIS:\\sites' | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
+    sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
+    site_json = if sites_listed == ''
+                 [] # https://github.com/RossMurr4y/iis/issues/7
+               else
+                 JSON.parse(sites_listed)
+               end
     site_json = [site_json] if site_json.is_a?(Hash)
     site_json.map do |site|
       site_hash               = {}
@@ -82,7 +87,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       create_switches << "; Start-Website -Name \"#{@resource[:name]}\"" 
     end
 
-    inst_cmd = "#$snap_mod; New-Website #{create_switches.join(' ')}"
+    inst_cmd = "$snap_mod; New-Website #{create_switches.join(' ')}"
     resp = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
 
     @resource.original_parameters.each_key do |k|
@@ -102,7 +107,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def destroy
-    inst_cmd = "#$snap_mod; Remove-Website -Name \"#{@resource[:name]}\""
+    inst_cmd = "$snap_mod; Remove-Website -Name \"#{@resource[:name]}\""
     resp = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
     raise(resp) unless resp.empty?
     @property_hash.clear

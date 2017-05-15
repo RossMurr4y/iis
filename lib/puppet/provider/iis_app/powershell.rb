@@ -31,20 +31,22 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
   end
 
   def self.instances
-    inst_cmd = "#$snap_mod; Get-WebApplication | Select path, physicalPath, applicationPool, ItemXPath | ConvertTo-JSON -Depth 4"
-    # if the inst_cmd is just an empty/null string, parsing it will fall over.
-    if inst_cmd.length >= 2
-      app_json = JSON.parse(Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd))
-      app_json = [app_json] if app_json.is_a?(Hash)
-      app_json.map do |app|
-        app_hash                = {}
-        app_hash[:ensure]       = :present
-        app_hash[:name]         = app['path'].gsub(%r{^\/}, '')
-        app_hash[:physicalpath] = app['physicalPath']
-        app_hash[:app_pool]     = app['applicationPool']
-        app_hash[:parent_site]  = app['ItemXPath'].scan(%r{'([^']*)'}).first.first
-        new(app_hash)
-      end
+    inst_cmd = "$snap_mod; Get-WebApplication | Select path, physicalPath, applicationPool, ItemXPath | ConvertTo-JSON -Depth 4"
+    apps_listed = Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd)
+    app_json = if apps_listed == ''
+                 [] # https://github.com/RossMurr4y/iis/issues/7
+               else
+                 JSON.parse(apps_listed)
+               end
+    app_json = [app_json] if app_json.is_a?(Hash)           
+    app_json.map do |app|
+      app_hash                = {}
+      app_hash[:ensure]       = :present
+      app_hash[:name]         = app['path'].gsub(%r{^\/}, '')
+      app_hash[:physicalpath] = app['physicalPath']
+      app_hash[:app_pool]     = app['applicationPool']
+      app_hash[:parent_site]  = app['ItemXPath'].scan(%r{'([^']*)'}).first.first
+      new(app_hash)
     end
   end
 
@@ -54,7 +56,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
 
   def create
     create_switches = [ 
-      "#$snap_mod;",
+      "$snap_mod;",
       "New-WebApplication -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:physicalpath]}\"",
       "-Site \"#{@resource[:parent_site]}\"",

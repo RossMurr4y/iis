@@ -59,30 +59,53 @@ Puppet::Type.newtype(:iis_pool) do
     end
   end
 
-  newproperty(:startmode) do
-    # In Powershell 3, WebAdministration snapin, the 'startmode' is known as 'AutoStart' and is a bool.
-    # We'll accept values for both snap-in and module here, and put the logic in the Provider.
-    desc 'How the AppPool should be started.'
-    newvalues(:OnDemand, :AlwaysRunning, :true, :false)
-    #defaultto :OnDemand
-  end
-
   newproperty(:rapidfailprotection) do
     desc ''
     newvalues(:true, :false)
     #defaultto :true
   end
 
-  newproperty(:identitytype) do
-    desc 'The type of Identity to run this AppPool under.'
-    newvalues(:LocalSystem, :LocalService, :NetworkService, :SpecificUser, :ApplicationPoolIdentity)
-    aliasvalue(:"0", :LocalSystem)
-    aliasvalue(:"1", :LocalService)
-    aliasvalue(:"2", :NetworkService)
-    aliasvalue(:"3", :SpecificUser)
-    aliasvalue(:"4", :ApplicationPoolIdentity)
-    #defaultto :applicationPoolIdentity
+  # the values/aliases of the following params are inverse in Windows 2008 Standard
+  if Facter.value(:os)['release']['major'] == '2008'
+    newproperty(:identitytype) do
+      desc 'The type of Identity to run this AppPool under.'
+      newvalues(:"0", :"1", :"2", :"3", :"4",)
+      aliasvalue(:LocalSystem, :"0")
+      aliasvalue(:LocalService, :"1")
+      aliasvalue(:NetworkService, :"2")
+      aliasvalue(:SpecificUser, :"3")
+      aliasvalue(:ApplicationPoolIdentity, :"4")
+      #defaultto :applicationPoolIdentity
+    end
+    newproperty(:startmode) do
+      # In Powershell 3, WebAdministration snapin, the 'startmode' is known as 'AutoStart' and is a bool.
+      # We'll accept values for both snap-in and module here, and put the logic in the Provider.
+      desc 'How the AppPool should be started.'
+      newvalues(:true, :false)
+      aliasvalue(:OnDemand, :true)
+      aliasvalue(:AlwaysRunning, :false)
+      #defaultto :OnDemand
+    end
+  else
+    newproperty(:identitytype) do
+      desc 'The type of Identity to run this AppPool under.'
+      newvalues(:LocalSystem, :LocalService, :NetworkService, :SpecificUser, :ApplicationPoolIdentity)
+      aliasvalue(:"0", :LocalSystem)
+      aliasvalue(:"1", :LocalService)
+      aliasvalue(:"2", :NetworkService)
+      aliasvalue(:"3", :SpecificUser)
+      aliasvalue(:"4", :ApplicationPoolIdentity)
+      #defaultto :applicationPoolIdentity
+    end
+    newproperty(:startmode) do
+      desc 'How the AppPool should be started.'
+      newvalues(:OnDemand, :AlwaysRunning)
+      aliasvalue(:true, :OnDemand)
+      aliasvalue(:false, :AlwaysRunning)
+      #defaultto :OnDemand
+    end
   end
+
 
   newproperty(:idletimeout) do
     desc 'The Idle Timeout of the AppPool (in minutes).'

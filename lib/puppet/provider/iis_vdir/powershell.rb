@@ -31,19 +31,21 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.instances
     virtual_directories = []
-    inst_cmd = "#$snap_mod; Get-WebVirtualDirectory | Select path, physicalPath, ItemXPath | ConvertTo-JSON -Depth 4"
-    resp = Puppet::Type::Iis_vdir::ProviderPowershell.run(inst_cmd)
-    unless resp.empty?
-      vdir_names = JSON.parse(resp)
-      vdir_names = [vdir_names] if vdir_names.is_a?(Hash)
-      vdir_names.each do |dir|
-        dir_hash               = {}
-        dir_hash[:name]        = dir['path'].gsub(%r{^\/}, '')
-        dir_hash[:path]        = dir['physicalPath']
-        dir_hash[:parent_site] = dir['ItemXPath'].scan(%r{'([^']*)'}).first.first
-        dir_hash[:ensure]      = :present
-        virtual_directories << new(dir_hash)
-      end
+    inst_cmd = "$snap_mod; Get-WebVirtualDirectory | Select path, physicalPath, ItemXPath | ConvertTo-JSON -Depth 4"
+    dirs_listed = Puppet::Type::Iis_vdir::ProviderPowershell.run(inst_cmd)
+    vdir_json = if dirs_listed == ''
+                  [] # https://github.com/RossMurr4y/iis/issues/7
+                else
+                  JSON.parse(dirs_listed)
+                end
+    vdir_json = [vdir_json] if vdir_json.is_a?(Hash)
+    vdir_json.each do |dir|
+      dir_hash               = {}
+      dir_hash[:name]        = dir['path'].gsub(%r{^\/}, '')
+      dir_hash[:path]        = dir['physicalPath']
+      dir_hash[:parent_site] = dir['ItemXPath'].scan(%r{'([^']*)'}).first.first
+      dir_hash[:ensure]      = :present
+      virtual_directories << new(dir_hash)
     end
     virtual_directories
   end
@@ -54,7 +56,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def create
     create_switches = [ 
-      "#$snap_mod;",
+      "$snap_mod;",
       "New-WebVirtualDirectory -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:path]}\"",
       "-Site \"#{@resource[:parent_site]}\"",
@@ -77,7 +79,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def destroy
     inst_cmd = [
-      "#$snap_mod;",
+      "$snap_mod;",
       'Remove-WebVirtualDirectory',
       "-Site \"IIS:\\Sites\\#{@property_hash[:parent_site]}",
       "-Name \"#{@property_hash[:name]}\""      
