@@ -59,21 +59,13 @@ Puppet::Type.newtype(:iis_pool) do
     end
   end
 
-  newproperty(:startmode) do
-    # In Powershell 3, WebAdministration snapin, the 'startmode' is known as 'AutoStart' and is a bool.
-    # We'll accept values for both snap-in and module here, and put the logic in the Provider.
-    desc 'How the AppPool should be started.'
-    newvalues(:OnDemand, :AlwaysRunning, :true, :false)
-    #defaultto :OnDemand
-  end
-
   newproperty(:rapidfailprotection) do
     desc ''
     newvalues(:true, :false)
     #defaultto :true
   end
 
-  # the values/aliases are inverse in Windows 2008 Standard
+  # the values/aliases of the following params are inverse in Windows 2008 Standard
   if Facter.value(:os)['release']['major'] == '2008'
     newproperty(:identitytype) do
       desc 'The type of Identity to run this AppPool under.'
@@ -85,6 +77,15 @@ Puppet::Type.newtype(:iis_pool) do
       aliasvalue(:ApplicationPoolIdentity, :"4")
       #defaultto :applicationPoolIdentity
     end
+    newproperty(:startmode) do
+      # In Powershell 3, WebAdministration snapin, the 'startmode' is known as 'AutoStart' and is a bool.
+      # We'll accept values for both snap-in and module here, and put the logic in the Provider.
+      desc 'How the AppPool should be started.'
+      newvalues(:true, :false)
+      aliasvalue(:OnDemamd, :true)
+      aliasvalue(:AlwaysRunning, :false)
+      #defaultto :OnDemand
+    end
   else
     newproperty(:identitytype) do
       desc 'The type of Identity to run this AppPool under.'
@@ -95,6 +96,13 @@ Puppet::Type.newtype(:iis_pool) do
       aliasvalue(:"3", :SpecificUser)
       aliasvalue(:"4", :ApplicationPoolIdentity)
       #defaultto :applicationPoolIdentity
+    end
+    newproperty(:startmode) do
+      desc 'How the AppPool should be started.'
+      newvalues(:OnDemand, :AlwaysRunning)
+      aliasvalue(:true, :OnDemand)
+      aliasvalue(:false, :AlwaysRunning)
+      #defaultto :OnDemand
     end
   end
 
