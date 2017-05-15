@@ -84,6 +84,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     end
   end
 
+
   if Facter.value(:os)['release']['major'] == '2008'
     $identityType_alias =                        
     case @resource[:identitytype]              # IdentityType must end up as the Int
