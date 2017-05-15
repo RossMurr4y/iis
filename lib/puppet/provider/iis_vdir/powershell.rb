@@ -31,7 +31,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.instances
     virtual_directories = []
-    inst_cmd = "$snap_mod; Get-WebVirtualDirectory | Select path, physicalPath, ItemXPath | ConvertTo-JSON -Depth 4"
+    inst_cmd = "#{$snap_mod}; Get-WebVirtualDirectory | Select path, physicalPath, ItemXPath | ConvertTo-JSON -Depth 4"
     dirs_listed = Puppet::Type::Iis_vdir::ProviderPowershell.run(inst_cmd)
     vdir_json = if dirs_listed == ''
                   [] # https://github.com/RossMurr4y/iis/issues/7
@@ -56,7 +56,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def create
     create_switches = [ 
-      "$snap_mod;",
+      "#{$snap_mod};",
       "New-WebVirtualDirectory -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:path]}\"",
       "-Site \"#{@resource[:parent_site]}\"",
@@ -79,7 +79,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def destroy
     inst_cmd = [
-      "$snap_mod;",
+      "#{$snap_mod};",
       'Remove-WebVirtualDirectory',
       "-Site \"IIS:\\Sites\\#{@property_hash[:parent_site]}",
       "-Name \"#{@property_hash[:name]}\""      

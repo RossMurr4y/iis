@@ -31,7 +31,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
   end
 
   def self.instances
-    inst_cmd = "$snap_mod; Get-WebApplication | Select path, physicalPath, applicationPool, ItemXPath | ConvertTo-JSON -Depth 4"
+    inst_cmd = "#{$snap_mod}; Get-WebApplication | Select path, physicalPath, applicationPool, ItemXPath | ConvertTo-JSON -Depth 4"
     apps_listed = Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd)
     app_json = if apps_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
@@ -56,7 +56,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
 
   def create
     create_switches = [ 
-      "$snap_mod;",
+      "#{$snap_mod};",
       "New-WebApplication -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:physicalpath]}\"",
       "-Site \"#{@resource[:parent_site]}\"",
@@ -80,7 +80,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
 
   def destroy
     inst_cmd = [
-      "#$snap_mod;",
+      "#{$snap_mod};",
       'Remove-WebApplication',
       "-Site \"#{@property_hash[:parent_site]}\"",
       "-Name \"#{@property_hash[:name]}\"",
