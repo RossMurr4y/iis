@@ -83,7 +83,7 @@ Puppet::Type.newtype(:iis_site) do
 
   newproperty(:authtypes, :array_matching => :all)
     desc 'An array of all enabled Authentication Types (Anon, Basic, Digest, Windows). Absent values are disabled.'
-    newvalues(:Anonymous, :ASP, :Basic, :Digest, :Forms :Windows)
+    newvalues(:Anonymous, :ASP, :Basic, :Digest, :Forms, :Windows)
     aliasvalue(:A, :Anonymous)
     aliasvalue(:Impersonation, :ASP)
     aliasvalue(:B, :Basic)
