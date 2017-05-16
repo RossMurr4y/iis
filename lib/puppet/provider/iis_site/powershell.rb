@@ -35,7 +35,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.instances
     inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
-    auth_cmd = "#{$snap_mod}; $auths = @(); Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {$auth = Get-WebConfigurationProperty -Filter \"System.webServer/security/authentication/*\" -Name 'Enabled' -Location $_.Name } | Where-Object {$_.Value -eq 'True'}; | $result = $auth.ItemXPath.SubString('42'); $result -join ','"
+    auth_cmd = "#{$snap_mod}; $auths = @(); Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {$auth = Get-WebConfigurationProperty -Filter \"System.webServer/security/authentication/*\" -Name 'Enabled' -Location $_.Name } | Where-Object {$_.Value -eq 'True'}; $result = $auth.ItemXPath.SubString('42'); $result -join ','"
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
       sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
