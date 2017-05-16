@@ -52,6 +52,7 @@ iis_site { 'TestWebsite':
   ip         => '127.0.0.1',
   port       => '80',
   ssl        => 'false',
+  authtypes  => 'B,F,W'
 }
 ```
 
@@ -67,6 +68,7 @@ iis_site { 'TestWebsite':
 **ip:**         | either *, or a valid IPv4 or IPv6 address. Defaults to *.
 **port:**       | Must be a valid port number. Integer, not string.
 **ssl:**        | true, false. Defaults to false.
+**authtypes:**  | Anonymous, ASP, Basic, Digest, Forms Windows (A,ASP,B,D,F,W). Absent types are disabled.
 
 ### iis_pool
 

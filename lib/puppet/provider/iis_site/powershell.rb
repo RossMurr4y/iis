@@ -14,17 +14,37 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
 
   mk_resource_methods
 
+  def self.authenticationtypes 
+    {
+      Anonymous: 'system.webServer/security/authentication/anonymousAuthentication',
+      ASP:       'system.webServer/security/authentication/aspAuthentication',
+      Basic:     'system.webServer/security/authentication/basicAuthentication',
+      Digest:    'system.webServer/security/authentication/digestAuthentication',
+      Forms:     'system.webServer/security/authentication/formsAuthentication',
+      Windows:   'system.webServer/security/authentication/windowsAuthentication'
+    }
+  end
+
   def initialize(value = {})
     super(value)
     @property_flush = {
-      'itemproperty' => {},
-      'binders'      => {}
+      'itemproperty'   => {},
+      'binders'        => {},
     }
   end
 
   def self.instances
-    inst_cmd = "#{$snap_mod}; Get-ChildItem 'IIS:\\sites' | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
-    sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
+    inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
+    auth_cmd = "#{$snap_mod}; $auths = @(); Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {$auth = (Get-WebConfigurationProperty -Filter \"System.webServer/security/authentication/*\" -Name 'Enabled' -Location $_.Name } | Where-Object {$_.Value -eq 'True'}); | $result = $auth.ItemXPath.SubString('42'); $result -join ','"
+    begin
+      Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
+      sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
+      Puppet.debug "auth_cmd running. Currently looks like #{auth_cmd}"
+      auths_enabled = Puppet::Type::Iis_site::ProviderPowershell.run(auth_cmd)
+    rescue Puppet::ExecutionFailure => e
+      raise(e)
+    end
+
     site_json = if sites_listed == ''
                  [] # https://github.com/RossMurr4y/iis/issues/7
                else
@@ -51,6 +71,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
                                 else
                                   :true
                                 end
+      site_hash[:authtypes] = auths_enabled
       new(site_hash)
     end
   end   

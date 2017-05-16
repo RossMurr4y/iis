@@ -81,6 +81,20 @@ Puppet::Type.newtype(:iis_site) do
     defaultto :false
   end
 
+  newproperty(:authtypes, :array_matching => :all)
+    desc 'An array of all enabled Authentication Types (Anon, Basic, Digest, Windows). Absent values are disabled.'
+    newvalues(:Anonymous, :ASP, :Basic, :Digest, :Forms :Windows)
+    aliasvalue(:A, :Anonymous)
+    aliasvalue(:Impersonation, :ASP)
+    aliasvalue(:B, :Basic)
+    aliasvalue(:D, :Digest)
+    aliasvalue(:F, :Forms)
+    aliasvalue(:W, :Windows)
+    munge do |value|
+      value.capitalize
+    end
+  end
+
   autorequire(:iis_pool) do
     self[:app_pool] if @parameters.include? :app_pool
   end
