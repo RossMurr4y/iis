@@ -12,6 +12,13 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     $snap_mod = 'Add-PSSnapin WebAdministration'
   end
 
+  valid_auth_types = [
+    'system.webServer/security/authentication/anonymousAuthentication',
+    'system.webServer/security/authentication/basicAuthentication',
+    'system.webServer/security/authentication/digestAuthentication',
+    'system.webServer/security/authentication/windowsAuthentication'
+  ]
+
   mk_resource_methods
 
   def self.authenticationtypes
@@ -42,17 +49,11 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       '} | ConvertTo-JSON -Depth 4 -Compress'
 
     auth_cmd =
-      '$types = @('\
-      "'system.webServer/security/authentication/anonymousAuthentication',"\
-      "'system.webServer/security/authentication/basicAuthentication', "\
-      "'system.webServer/security/authentication/digestAuthentication', "\
-      "'system.webServer/security/authentication/windowsAuthentication'"\
-      "); #{$snap_mod};"\
+      "#{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter $types -Name 'Enabled' "\
+      "Get-WebConfigurationProperty -Filter #{valid_auth_types} -Name 'Enabled' "\
       "-Location $_.Name | Where-Object {$_.Value -eq 'True'}};"\
-      "$result = If($auth.length -gt 0){$sub = $auth.ItemXPath.SubString('42'); (Get-Culture).textinfo.totitlecase($sub) -join ','}"\
-      "Else{''}; $result"
+      '$auth'
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
@@ -89,7 +90,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
                                 else
                                   :true
                                 end
-      site_hash[:authtypes] = auths_enabled.capitalize
+      site_hash[:authtypes] = auths_enabled
       new(site_hash)
     end
   end
