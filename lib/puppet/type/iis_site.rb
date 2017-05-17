@@ -1,5 +1,6 @@
 require 'pathname'
 require 'resolv'
+require 'puppet/property/list'
 
 Puppet::Type.newtype(:iis_site) do
   desc 'Creates and manages IIS Websites.'
@@ -79,7 +80,7 @@ Puppet::Type.newtype(:iis_site) do
     defaultto :false
   end
 
-  newproperty(:authtypes, array_matching: :all) do
+  newproperty(:authtypes, array_matching: :all :parent => Puppet::Property::List) do
   desc 'An array of all enabled Authentication Types (Anon, Basic, Digest, Windows). Absent values are disabled.'
   newvalues(:Anonymousauthentication, :Basicauthentication, :Digestauthentication, :Windowsauthentication)
   aliasvalue(:A, :Anonymousauthentication)
