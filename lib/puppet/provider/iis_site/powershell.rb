@@ -89,7 +89,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
                                 else
                                   :true
                                 end
-      site_hash[:authtypes] = auths_enabled.to_s
+      site_hash[:authtypes] = auths_enabled.capitalize
       new(site_hash)
     end
   end
