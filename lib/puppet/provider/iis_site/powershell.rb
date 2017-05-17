@@ -39,7 +39,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       "Get-ChildItem 'IIS:\\Sites' | ForEach-Object { "\
       'Get-ItemProperty $_.PSPath | '\
       'Select name, physicalPath, applicationPool, hostHeader, state, bindings '\
-      '} | ConvertTo-JSON -Depth 4 -Compress'\
+      '} | ConvertTo-JSON -Depth 4 -Compress'
 
     auth_cmd =
       '$types = @('\
@@ -49,13 +49,10 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       "'system.webServer/security/authentication/windowsAuthentication'"\
       "); #{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name "\
-      "| Where-Object {$_.Value -eq 'True'}};"\
+      "Get-WebConfigurationProperty -Filter $types -Name 'Enabled' "\
+      "-Location $_.Name | Where-Object {$_.Value -eq 'True'}};"\
       "$result = If($auth.length -gt 0){$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
-      "Else{$Null}; $result"
-     # 'If($auth.ItemXPath.length -ne $Null -and $auth.ItemXPath.length -gt 0){'\
-
-      #"};"
+      "Else{''}; $result"
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
@@ -95,7 +92,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       site_hash[:authtypes] = auths_enabled.to_s
       new(site_hash)
     end
-  end   
+  end
 
   def self.prefetch(resources)
     sites = instances
