@@ -37,35 +37,24 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     inst_cmd =
       "#{$snap_mod}; "\
       "Get-ChildItem 'IIS:\\Sites' | ForEach-Object { "\
-        'Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings '\
+      'Get-ItemProperty $_.PSPath | '\
+      'Select name, physicalPath, applicationPool, hostHeader, state, bindings '\
       '} | ConvertTo-JSON -Depth 4 -Compress'\
 
     auth_cmd =
       '$types = @('\
-        "'system.webServer/security/authentication/anonymousAuthentication',"\
-        "'system.webServer/security/authentication/basicAuthentication', "\
-        "'system.webServer/security/authentication/digestAuthentication', "\
-        "'system.webServer/security/authentication/windowsAuthentication'"\
+      "'system.webServer/security/authentication/anonymousAuthentication',"\
+      "'system.webServer/security/authentication/basicAuthentication', "\
+      "'system.webServer/security/authentication/digestAuthentication', "\
+      "'system.webServer/security/authentication/windowsAuthentication'"\
       "); #{$snap_mod};"\
       "Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-        "$auth = Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name"\
-      "} | Where-Object {$_.Value -eq 'True'};"\
+      "$auth = Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name "\
+      "| Where-Object {$_.Value -eq 'True'}};"\
+      "If ($result.length > 0){"\
       "$result = $auth.ItemXPath.SubString('42');"\
-      "$result -join ','"
-
-    #auth_cmd = <<-POWERSHELL.gsub(/^ {6}/, '')
-    #  $types = @(`
-    #    'system.webServer/security/authentication/anonymousAuthentication', `
-    #    'system.webServer/security/authentication/basicAuthentication', `
-    #    'system.webServer/security/authentication/digestAuthentication', `
-    #    'system.webServer/security/authentication/windowsAuthentication'`
-    #  )`
-    #  #{$snap_mod}; `
-    #  Get-ChildItem \"IIS:\\Sites\" | ForEach-Object { `
-    #    $authentications = Get-WebConfiguration -filter $types -Name 'Enabled' `
-    #    -PSPath \"IIS:\\Sites\\$_.Name\" `
-    #  }; $authentications | ForEach {$_.SectionPath}
-    #POWERSHELL
+      "$result -join ','"\
+      "Else {$result = ''}"
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
