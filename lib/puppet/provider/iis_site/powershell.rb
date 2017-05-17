@@ -12,7 +12,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     $snap_mod = 'Add-PSSnapin WebAdministration'
   end
 
-  valid_auth_types = [
+  $valid_auth_types = [
     'system.webServer/security/authentication/anonymousAuthentication',
     'system.webServer/security/authentication/basicAuthentication',
     'system.webServer/security/authentication/digestAuthentication',
@@ -51,7 +51,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     auth_cmd =
       "#{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter #{valid_auth_types} -Name 'Enabled' "\
+      "Get-WebConfigurationProperty -Filter #{$valid_auth_types} -Name 'Enabled' "\
       "-Location $_.Name | Where-Object {$_.Value -eq 'True'}};"\
       '$auth'
 
