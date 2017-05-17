@@ -51,7 +51,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
       "Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name "\
       "| Where-Object {$_.Value -eq 'True'}};"\
-      "If($auth.length -gt 0){$result = $auth.ItemXPath.SubString('42'); $result -join ','};"
+      "If($auth.length -gt 0){$result = $auth.ItemXPath.SubString('42'); $result -join ','}"\
       "Else{$result = ''}"
      # 'If($auth.ItemXPath.length -ne $Null -and $auth.ItemXPath.length -gt 0){'\
 
