@@ -48,8 +48,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       "'system.webServer/security/authentication/digestAuthentication', "\
       "'system.webServer/security/authentication/windowsAuthentication'"\
       "); #{$snap_mod};"\
-      "Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "$auth = Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name "\
+      "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
+      "Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name "\
       "| Where-Object {$_.Value -eq 'True'}};"\
      # 'If($auth.ItemXPath.length -ne $Null -and $auth.ItemXPath.length -gt 0){'\
       "$result = $auth.ItemXPath.SubString('42');"\
