@@ -34,26 +34,24 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def self.instances
-    inst_cmd = <<-POWERSHELL.gsub(/^ {6}/, '')
-      #{$snap_mod}; `
-      Get-ChildItem \"IIS:\\Sites\" | ForEach-Object { `
-        Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings `
-      } | ConvertTo-JSON -Depth 4 -Compress
-    POWERSHELL
+    inst_cmd =
+      "#{$snap_mod}; "\
+      "Get-ChildItem 'IIS:\\Sites' | ForEach-Object { "\
+        'Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings '\
+      '} | ConvertTo-JSON -Depth 4 -Compress'\
 
-     auth_cmd = <<-POWERSHELL.sub(/\n$/, '')
-      $types = @('system.webServer/security/authentication/anonymousAuthentication', `
-                 'system.webServer/security/authentication/basicAuthentication', `
-                 'system.webServer/security/authentication/digestAuthentication', `
-                 'system.webServer/security/authentication/windowsAuthentication'`
-      ); `
-      {$snap_mod}; `
-      Get-ChildItem 'IIS:\\Sites' | ForEach-Object { `
-      $auth = Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name `
-      } | Where-Object {$_.Value -eq 'True'}; `
-      $result = $auth.ItemXPath.SubString('42'); `
-      $result -join ','
-     POWERSHELL
+    auth_cmd =
+      '$types = @('\
+        "'system.webServer/security/authentication/anonymousAuthentication',"\
+        "'system.webServer/security/authentication/basicAuthentication', "\
+        "'system.webServer/security/authentication/digestAuthentication', "\
+        "'system.webServer/security/authentication/windowsAuthentication'"\
+      "); #{$snap_mod};"\
+      "Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
+        "$auth = Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name"\
+      "} | Where-Object {$_.Value -eq 'True'};"\
+      "$result = $auth.ItemXPath.SubString('42');"\
+      "$result -join ','"
 
     #auth_cmd = <<-POWERSHELL.gsub(/^ {6}/, '')
     #  $types = @(`
