@@ -4,7 +4,7 @@ require 'json'
 Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::Iispowershell) do
   confine :operatingsystem => :windows
   confine :powershell_version => [:"5.0", :"4.0", :"3.0"]
-  
+
   # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
   if Facter.value(:os)['release']['major'] != '2008'
     $snap_mod = 'Import-Module WebAdministration'
@@ -14,7 +14,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
 
   mk_resource_methods
 
-  def self.authenticationtypes 
+  def self.authenticationtypes
     {
       Anonymous: 'system.webServer/security/authentication/anonymousAuthentication',
       ASP:       'system.webServer/security/authentication/aspAuthentication',
@@ -29,13 +29,41 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     super(value)
     @property_flush = {
       'itemproperty'   => {},
-      'binders'        => {},
+      'binders'        => {}
     }
   end
 
   def self.instances
-    inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings} | ConvertTo-JSON -Depth 4 -Compress"
-    auth_cmd = "#{$snap_mod}; $auths = @(); Get-ChildItem \"IIS:\\Sites\" | ForEach-Object {$auth = Get-WebConfigurationProperty -Filter \"System.webServer/security/authentication/*\" -Name 'Enabled' -Location $_.Name } | Where-Object {$_.Value -eq 'True'}; $result = $auth.ItemXPath.SubString('42'); $result -join ','"
+    inst_cmd = <<-POWERSHELL.gsub(/^ {6}/, '')
+      #{$snap_mod}; `
+      Get-ChildItem \"IIS:\\Sites\" | ForEach-Object { `
+        Get-ItemProperty $_.PSPath | Select name, physicalPath, applicationPool, hostHeader, state, bindings `
+      } | ConvertTo-JSON -Depth 4 -Compress
+    POWERSHELL
+
+    # auth_cmd = <<-POWERSHELL.sub(/\n$/, '')
+    #  #{$snap_mod}; `
+    #  Get-ChildItem \"IIS:\\Sites\" | ForEach-Object { `
+    #  $auth = Get-WebConfigurationProperty -Filter \"System.webServer/security/authentication/*\" -Name 'Enabled' -Location $_.Name `
+    #  } | Where-Object {$_.Value -eq 'True'}; `
+    #  $result = $auth.ItemXPath.SubString('42'); `
+    #  $result -join ','
+    # POWERSHELL
+
+    auth_cmd = <<-POWERSHELL.gsub(/^ {6}/, '')
+      $types = @(`
+        'system.webServer/security/authentication/anonymousAuthentication', `
+        'system.webServer/security/authentication/basicAuthentication', `
+        'system.webServer/security/authentication/digestAuthentication', `
+        'system.webServer/security/authentication/windowsAuthentication'`
+      )`
+      #{$snap_mod}; `
+      Get-ChildItem \"IIS:\\Sites\" | ForEach-Object { `
+        $authentications = Get-WebConfiguration -filter $types -Name 'Enabled' `
+        -PSPath \"IIS:\\Sites\\$_.Name\" `
+      }; $authentications | ForEach {$_.SectionPath}
+    POWERSHELL
+
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
       sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
@@ -46,10 +74,10 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
     end
 
     site_json = if sites_listed == ''
-                 [] # https://github.com/RossMurr4y/iis/issues/7
-               else
-                 JSON.parse(sites_listed)
-               end
+                  [] # https://github.com/RossMurr4y/iis/issues/7
+                else
+                  JSON.parse(sites_listed)
+                end
     site_json = [site_json] if site_json.is_a?(Hash)
     site_json.map do |site|
       site_hash               = {}
