@@ -52,8 +52,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, :parent => Puppet::Provider::I
       "$auth = Get-WebConfigurationProperty -Filter $types -Name 'Enabled' -Location $_.Name "\
       "| Where-Object {$_.Value -eq 'True'}};"\
       "$result = $auth.ItemXPath.SubString('42');"\
-      "If ($result.length > 0){$result -join ','}"\
-      "Else {$result}"
+      "$result -join ','"
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
