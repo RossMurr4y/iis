@@ -214,6 +214,15 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     @property_hash[:state] = value
   end
 
+  def authtypes
+    [@property_hash[:version]] || []
+  end
+
+  def authtypes=(value)
+    @property_flush[:authtypes] = value
+    @property_hash[:authtypes] = value
+  end
+
   def flush
     command_array = [$snap_mod]
 
