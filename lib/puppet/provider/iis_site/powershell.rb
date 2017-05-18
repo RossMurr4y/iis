@@ -12,7 +12,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
                 'Add-PSSnapin WebAdministration'
               end
 
-  $valid_auth_types = [
+  $valid_auths = [
     'system.webServer/security/authentication/anonymousAuthentication',
     'system.webServer/security/authentication/basicAuthentication',
     'system.webServer/security/authentication/digestAuthentication',
@@ -45,16 +45,18 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
       "#{$snap_mod}; "\
       "Get-ChildItem 'IIS:\\Sites' | ForEach-Object { "\
       'Get-ItemProperty $_.PSPath | '\
-      'Select name, physicalPath, applicationPool, hostHeader, state, bindings '\
+      'Select name, physicalPath, applicationPool, hostHeader, state, bindings'\
       '} | ConvertTo-JSON -Depth 4 -Compress'
 
     auth_cmd =
       "#{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter #{$valid_auth_types} -Name 'Enabled' "\
-      "-Location $_.Name | Where-Object {$_.Value -eq 'True'}};"\
-      "$result = If($auth.length -gt 0){$sub = $auth.ItemXPath.SubString('42');"\
-      "(Get-Culture).textinfo.totitlecase($sub) -join ','} Else {''}; $result"
+      "Get-WebConfigurationProperty -Filter #{$valid_auths.join(', ')} "\
+      "-Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
+      '$result = If($auth.length -gt 0){'\
+      "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
+      "Else {''};"\
+      '$result'
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
