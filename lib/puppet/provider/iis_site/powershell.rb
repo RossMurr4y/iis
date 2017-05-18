@@ -50,7 +50,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     auth_cmd =
       "#{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter #{$valid_auths.values.join(', ')} "\
+      "Get-WebConfigurationProperty -Filter #{authenticationtypes.values.join(', ')} "\
       "-Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
       '$result = If($auth.length -gt 0){'\
       "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
