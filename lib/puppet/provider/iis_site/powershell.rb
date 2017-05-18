@@ -132,9 +132,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
 
     auth_cmd = [$snap_mod]
-    enabled_types = @resource[:authtypes].split(',')
     @authenticationtypes.each do |auth, _filter|
-      value = if enabled_types.contains? auth
+      value = if @resource[:authtypes].contains? auth
                 :True
               else
                 :False
