@@ -50,8 +50,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     auth_cmd =
       "#{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter #{authenticationtypes.values.join(', ')} "\
-      "-Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
+      "Get-WebConfigurationProperty -Filter #{authenticationtypes.values.join(',')}"\
+      " -Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
       '$result = If($auth.length -gt 0){'\
       "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
       "Else {''};"\
@@ -128,7 +128,27 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     end
 
     inst_cmd = "#{$snap_mod}; New-Website #{create_switches.join(' ')}"
-    resp = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
+    Puppet.debug "Create inst_cmd running. Currently looks like #{inst_cmd}"
+    Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
+
+    auth_cmd = [$snap_mod]
+    enabled_types = @resource[:authtypes].split(',')
+    @authenticationtypes.each do |auth, _filter|
+      value = if enabled_types.contains? auth
+                :True
+              else
+                :False
+              end
+      auth_cmd << 'Set-WebConfigurationProperty '\
+                  "-Filter #{@authenticationtypes[auth]} "\
+                  "-Name 'Enabled' "\
+                  "-Value #{value} "\
+                  "-Location #{@resource[:name]} "\
+                  "-PSPath 'IIS:\\Sites'"
+    end
+
+    Puppet.debug "Create auth_cmd running. Currently looks like #{auth_cmd}"
+    Puppet::Type::Iis_site::ProviderPowershell.run(auth_cmd)
 
     @resource.original_parameters.each_key do |k|
       @property_hash[k] = @resource[k]
@@ -142,6 +162,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     @property_hash[:app_pool]    = @resource[:app_pool]
     @property_hash[:state]       = @resource[:state]
     @property_hash[:protocol]    = @resource[:protocol]
+    @property_hash[:authtypes]   = @resource[:authtypes]
 
     exists? ? (return true) : (return false)
   end
