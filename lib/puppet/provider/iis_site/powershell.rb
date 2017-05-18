@@ -53,7 +53,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
       "Get-WebConfigurationProperty -Filter #{$valid_auth_types} -Name 'Enabled' "\
       "-Location $_.Name | Where-Object {$_.Value -eq 'True'}};"\
-      '$auth'
+      "$result = If($auth.length -gt 0){$sub = $auth.ItemXPath.SubString('42');"\
+      "(Get-Culture).textinfo.totitlecase($sub) -join ','} Else {''}; $result"
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
