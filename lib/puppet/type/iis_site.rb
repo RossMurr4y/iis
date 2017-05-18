@@ -81,13 +81,16 @@ Puppet::Type.newtype(:iis_site) do
   end
 
   newproperty(:authtypes, array_matching: :all, :parent => Puppet::Property::List) do
-  desc 'An array of all enabled Authentication Types (Anon, Basic, Digest, Windows). Absent values are disabled.'
-  newvalues(:Anonymous, :Basic, :Digest, :Windows)
-  aliasvalue(:A, :Anonymous)
-  aliasvalue(:B, :Basic)
-  aliasvalue(:D, :Digest)
-  aliasvalue(:W, :Windows)
-  munge(&:capitalize)
+    desc 'An array of all enabled Authentication Types (Anon, Basic, Digest, Windows). Absent values are disabled.'
+    def insync?(is)
+      is.sort == should.sort
+    end
+    newvalues(:Anonymous, :Basic, :Digest, :Windows)
+    aliasvalue(:A, :Anonymous)
+    aliasvalue(:B, :Basic)
+    aliasvalue(:D, :Digest)
+    aliasvalue(:W, :Windows)
+    munge(&:capitalize)
   end
 
   autorequire(:iis_pool) do
