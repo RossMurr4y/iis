@@ -5,7 +5,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
   confine operatingsystem: :windows
   confine powershell_version: %i[5.0 4.0 3.0]
 
-  # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
+  # snap_mod: import the WebAdministration module, '
+  # or add the WebAdministration snap-in.
   $snap_mod = if Facter.value(:os)['release']['major'] != '2008'
                 'Import-Module WebAdministration'
               else
@@ -24,10 +25,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
   def self.authenticationtypes
     {
       Anonymous: 'system.webServer/security/authentication/anonymousAuthentication',
-      ASP:       'system.webServer/security/authentication/aspAuthentication',
       Basic:     'system.webServer/security/authentication/basicAuthentication',
       Digest:    'system.webServer/security/authentication/digestAuthentication',
-      Forms:     'system.webServer/security/authentication/formsAuthentication',
       Windows:   'system.webServer/security/authentication/windowsAuthentication'
     }
   end
@@ -51,7 +50,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     auth_cmd =
       "#{$snap_mod};"\
       "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter #{$valid_auths.join(', ')} "\
+      "Get-WebConfigurationProperty -Filter #{$valid_auths.values.join(', ')} "\
       "-Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
       '$result = If($auth.length -gt 0){'\
       "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
