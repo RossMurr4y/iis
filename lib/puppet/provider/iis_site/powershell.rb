@@ -48,7 +48,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
       '$result = If($auth.length -gt 0){'\
       "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
       "Else {''};"\
-      'Write-Host $result -NoNewLine'
+      'return $result -NoNewLine'
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
@@ -204,10 +204,6 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
   def state=(value)
     @property_flush['state'] = value
     @property_hash[:state] = value
-  end
-
-  def authtypes
-    [@property_hash[:version]] || []
   end
 
   def authtypes=(value)
