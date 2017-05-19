@@ -13,13 +13,6 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
                 'Add-PSSnapin WebAdministration'
               end
 
-  $valid_auths = [
-    'system.webServer/security/authentication/anonymousAuthentication',
-    'system.webServer/security/authentication/basicAuthentication',
-    'system.webServer/security/authentication/digestAuthentication',
-    'system.webServer/security/authentication/windowsAuthentication'
-  ]
-
   mk_resource_methods
 
   def self.authenticationtypes
@@ -55,7 +48,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
       '$result = If($auth.length -gt 0){'\
       "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
       "Else {''};"\
-      '$result'
+      'Write-Host $result -NoNewLine'
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
@@ -100,7 +93,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
   def self.prefetch(resources)
     sites = instances
     resources.keys.each do |site|
-      if provider = sites.find { |s| s.name == site }
+      if provider == sites.find { |s| s.name == site }
         resources[site].provider = provider
       end
     end
