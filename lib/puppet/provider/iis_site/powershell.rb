@@ -40,21 +40,22 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
       'Select name, physicalPath, applicationPool, hostHeader, state, bindings'\
       '} | ConvertTo-JSON -Depth 4 -Compress'
 
-    auth_cmd =
-      "#{$snap_mod};"\
-      "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
-      "Get-WebConfigurationProperty -Filter #{authenticationtypes.values.join(',')}"\
-      " -Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
-      '$result = If($auth.length -gt 0){'\
-      "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
-      "Else {''};"\
-      'return $result -NoNewLine'
+    auth_cmd = "Add-PSSnapin Webadministration; $auths = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {Get-WebConfigurationProperty -Filter #{authenticationtypes.values.join(',')} -Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}}; $auths.itemXPath -join ','"
+ #     "#{$snap_mod};"\
+ #     "$auth = Get-ChildItem 'IIS:\\Sites' | ForEach-Object {"\
+ #     "Get-WebConfigurationProperty -Filter #{authenticationtypes.values.join(',')}"\
+ #     " -Name 'Enabled' -Location $_.Name | Where {$_.Value -eq 'True'}};"\
+ #     '$result = If($auth.length -gt 0){'\
+ #     "$sub = $auth.ItemXPath.SubString('42'); $sub -join ','}"\
+ #     "Else {''};"\
+ #     'Write-Host $result -NoNewLine'
 
     begin
       Puppet.debug "inst_cmd running: Currently looks like #{inst_cmd}"
       sites_listed = Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
       Puppet.debug "auth_cmd running. Currently looks like #{auth_cmd}"
       auths_enabled = Puppet::Type::Iis_site::ProviderPowershell.run(auth_cmd)
+	  Puppet.debug "Auths Enabled looks like #{auths_enabled}"
     rescue Puppet::ExecutionFailure => e
       raise(e)
     end
@@ -85,7 +86,17 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
                                 else
                                   :true
                                 end
-      site_hash[:authtypes] = auths_enabled
+	  Puppet.debug "auths_enabled looks like #{auths_enabled}"
+
+	  auth_array = []
+	  authenticationtypes.keys.each do |auth|
+		auth_array << auth.to_s if auths_enabled.include? auth.downcase().to_s
+	  end
+	  
+	  
+	  Puppet.debug "Auth Array looks like #{auth_array}"
+					
+      site_hash[:authtypes] = auth_array.join(',')
       new(site_hash)
     end
   end
