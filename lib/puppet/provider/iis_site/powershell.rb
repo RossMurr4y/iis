@@ -130,12 +130,9 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
 
     auth_cmd = [$snap_mod]
-    @authenticationtypes.each do |auth, _filter|
-      value = if @resource[:authtypes].contains? auth
-                :True
-              else
-                :False
-              end
+    @authenticationtypes.keys.each do |auth|
+      value = :False
+      value = :True if @resource[:authtypes].contains? auth
       auth_cmd << 'Set-WebConfigurationProperty '\
                   "-Filter #{@authenticationtypes[auth]} "\
                   "-Name 'Enabled' "\
