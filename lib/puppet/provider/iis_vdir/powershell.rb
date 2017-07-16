@@ -1,15 +1,15 @@
 require 'puppet/provider/iispowershell'
 require 'json'
 
-Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::Iispowershell) do
-  confine :operatingsystem => :windows
+Puppet::Type.type(:iis_vdir).provide(:powershell, parent: Puppet::Provider::Iispowershell) do
+  confine operatingsystem: :windows
 
   # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
-  if Facter.value(:os)['release']['major'] != '2008'
-    $snap_mod = 'Import-Module WebAdministration'
-  else
-    $snap_mod = 'Add-PSSnapin WebAdministration'
-  end
+  $snap_mod = if Facter.value(:os)['release']['major'] != '2008'
+                'Import-Module WebAdministration'
+              else
+                'Add-PSSnapin WebAdministration'
+              end
 
   mk_resource_methods
 
@@ -43,7 +43,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
       dir_hash               = {}
       dir_hash[:name]        = dir['path'].gsub(%r{^\/}, '')
       dir_hash[:path]        = dir['physicalPath']
-      dir_hash[:parent_site] = dir['ItemXPath'].scan(%r{'([^']*)'}).first.first
+      dir_hash[:parent_site] = dir['ItemXPath'].scan(/'([^']*)'/).first.first
       dir_hash[:ensure]      = :present
       virtual_directories << new(dir_hash)
     end
@@ -52,10 +52,10 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
 
   def exists?
     @property_hash[:ensure] == :present
-  end   
+  end
 
   def create
-    create_switches = [ 
+    create_switches = [
       "#{$snap_mod};",
       "New-WebVirtualDirectory -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:path]}\"",
@@ -66,9 +66,9 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
     begin
       resp = Puppet::Type::Iis_vdir::ProviderPowershell.run(inst_cmd)
     rescue Puppet::ExecutionFailure => e
-      fail("Failed to create iis_vdir resource.")
+      raise('Failed to create iis_vdir resource.')
     end
-    
+
     @resource.original_parameters.each_key do |k|
       @property_hash[k] = @resource[k]
     end
@@ -82,7 +82,7 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
       "#{$snap_mod};",
       'Remove-WebVirtualDirectory',
       "-Site \"IIS:\\Sites\\#{@property_hash[:parent_site]}",
-      "-Name \"#{@property_hash[:name]}\""      
+      "-Name \"#{@property_hash[:name]}\""
     ]
     resp = Puppet::Type::Iis_vdir::ProviderPowershell.run(inst_cmd.join(' '))
     raise(resp) unless resp.empty?
@@ -106,12 +106,11 @@ Puppet::Type.type(:iis_vdir).provide(:powershell, :parent => Puppet::Provider::I
   end
 
   def flush
-    command_array = [ $snap_mod ]
+    command_array = [$snap_mod]
     @property_flush['vdirattrs'].each do |vdirattr, value|
       command_array << "Set-ItemProperty \"IIS:\\\\Sites\\#{@property_hash[:parent_site]}\\#{@property_hash[:name]}\" #{vdirattr} #{value}"
     end
     resp = Puppet::Type::Iis_vdir::ProviderPowershell.run(command_array.join('; '))
     raise(resp) unless resp.empty?
   end
-
 end

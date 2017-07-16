@@ -1,24 +1,24 @@
 require 'puppet/provider/iispowershell'
 require 'json'
 
-Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Iispowershell) do
-  confine :operatingsystem => :windows
-  confine :powershell_version => [:"5.0", :"4.0", :"3.0"]
+Puppet::Type.type(:iis_app).provide(:powershell, parent: Puppet::Provider::Iispowershell) do
+  confine operatingsystem: :windows
+  confine powershell_version: %i[5.0 4.0 3.0]
 
   def initialize(value = {})
     super(value)
     @property_flush = {
-      'appattrs' => {}      
+      'appattrs' => {}
     }
   end
 
   # snap_mod: import the WebAdministration module, or add the WebAdministration snap-in.
-  if Facter.value(:os)['release']['major'] != '2008'
-    $snap_mod = 'Import-Module WebAdministration'
-  else
-    $snap_mod = 'Add-PSSnapin WebAdministration'
-  end
-  
+  $snap_mod = if Facter.value(:os)['release']['major'] != '2008'
+                'Import-Module WebAdministration'
+              else
+                'Add-PSSnapin WebAdministration'
+              end
+
   mk_resource_methods
 
   def self.prefetch(resources)
@@ -38,24 +38,24 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
                else
                  JSON.parse(apps_listed)
                end
-    app_json = [app_json] if app_json.is_a?(Hash)           
+    app_json = [app_json] if app_json.is_a?(Hash)
     app_json.map do |app|
       app_hash                = {}
       app_hash[:ensure]       = :present
       app_hash[:name]         = app['path'].gsub(%r{^\/}, '')
       app_hash[:physicalpath] = app['physicalPath']
       app_hash[:app_pool]     = app['applicationPool']
-      app_hash[:parent_site]  = app['ItemXPath'].scan(%r{'([^']*)'}).first.first
+      app_hash[:parent_site]  = app['ItemXPath'].scan(/'([^']*)'/).first.first
       new(app_hash)
     end
   end
 
   def exists?
     @property_hash[:ensure] == :present
-  end   
+  end
 
   def create
-    create_switches = [ 
+    create_switches = [
       "#{$snap_mod};",
       "New-WebApplication -Name \"#{@resource[:name]}\"",
       "-PhysicalPath \"#{@resource[:physicalpath]}\"",
@@ -67,9 +67,9 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
     begin
       resp = Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd)
     rescue Puppet::ExecutionFailure => e
-      fail("Failed to create iis_app resource.")
+      raise('Failed to create iis_app resource.')
     end
-    
+
     @resource.original_parameters.each_key do |k|
       @property_hash[k] = @resource[k]
     end
@@ -83,7 +83,7 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
       "#{$snap_mod};",
       'Remove-WebApplication',
       "-Site \"#{@property_hash[:parent_site]}\"",
-      "-Name \"#{@property_hash[:name]}\"",
+      "-Name \"#{@property_hash[:name]}\""
     ]
     resp = Puppet::Type::Iis_app::ProviderPowershell.run(inst_cmd.join(' '))
     raise(resp) unless resp.empty?
@@ -103,12 +103,11 @@ Puppet::Type.type(:iis_app).provide(:powershell, :parent => Puppet::Provider::Ii
   end
 
   def flush
-    command_array = [ $snap_mod ]
+    command_array = [$snap_mod]
     @property_flush['appattrs'].each do |appattr, value|
       command_array << "Set-ItemProperty \"IIS:\\\\Sites\\#{@property_hash[:parent_site]}\\#{@property_hash[:name]}\" #{appattr} #{value}"
     end
     resp = Puppet::Type::Iis_app::ProviderPowershell.run(command_array.join('; '))
     raise(resp) unless resp.empty?
   end
-
 end

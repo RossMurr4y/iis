@@ -61,8 +61,8 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
 
     auth_array = []
     authenticationtypes.keys.each do |auth|
-      auth_array << auth.to_s if auths_enabled.include? auth.downcase().to_s
-    end	
+      auth_array << auth.to_s if auths_enabled.include? auth.downcase.to_s
+    end
 
     site_json = if sites_listed == ''
                   [] # https://github.com/RossMurr4y/iis/issues/7
@@ -130,22 +130,22 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
     Puppet::Type::Iis_site::ProviderPowershell.run(inst_cmd)
 
     auth_cmd = ["#{$snap_mod};"]
-    Puppet::Type::Iis_site::ProviderPowershell.authenticationtypes.keys.each do |auth|	
-	  value = if @resource[:authtypes].include?(auth)
-			     'True'
-			  else
-				 'False'
-			  end
-	  auth_cmd << 'Set-WebConfigurationProperty '\
-                  "-Filter #{authenticationtypes[auth]} "\
-                  "-Name 'Enabled' "\
-                  "-Value #{value} "\
-                  "-Location #{@resource[:name]} "\
-                  "-PSPath 'IIS:\\Sites'"
+    Puppet::Type::Iis_site::ProviderPowershell.authenticationtypes.keys.each do |auth|
+      value = if @resource[:authtypes].include?(auth)
+                'True'
+              else
+                'False'
+          end
+      auth_cmd << 'Set-WebConfigurationProperty '\
+                    "-Filter #{authenticationtypes[auth]} "\
+                    "-Name 'Enabled' "\
+                    "-Value #{value} "\
+                    "-Location #{@resource[:name]} "\
+                    "-PSPath 'IIS:\\Sites'"
     end
 
     Puppet.debug "Create auth_cmd running. Currently looks like #{auth_cmd}"
-	
+
     Puppet::Type::Iis_site::ProviderPowershell.run(auth_cmd)
 
     @resource.original_parameters.each_key do |k|
@@ -220,7 +220,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
   def flush
     command_array = [$snap_mod]
 
-	# Sync the authenticationtypes
+    # Sync the authenticationtypes
     @property_flush[:authtypes].each do |auth|
       value = :False
       value = :True if @resource[:authtypes].include? auth
@@ -231,8 +231,7 @@ Puppet::Type.type(:iis_site).provide(:powershell, parent: Puppet::Provider::Iisp
 					   "-Location #{@resource[:name]} "\
 					   "-PSPath 'IIS:\\Sites'"
     end
-	
-	
+
     # For Each 'itemproperty' that exists in the @property_flush array, queue it.
     @property_flush['itemproperty'].each do |iisname, value|
       command_array << "Set-ItemProperty -Path \"IIS:\\\\Sites\\#{@property_hash[:name]}\" -Name \"#{iisname}\" -Value \"#{value}\""

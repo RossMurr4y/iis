@@ -3,10 +3,10 @@ Puppet::Type.newtype(:iis_pool) do
   ensurable
 
   ### parameters
-  newparam(:name, :namevar => true) do
+  newparam(:name, namevar: true) do
     desc 'The Name of the Application Pool. The Namevar.'
     validate do |value|
-      fail("#{name} is not a valid ApplicationPool name.") unless value =~ %r{^[a-zA-Z0-9\-\_\.'\s]+$}
+      raise("#{name} is not a valid ApplicationPool name.") unless value =~ /^[a-zA-Z0-9\-\_\.'\s]+$/
     end
   end
 
@@ -25,7 +25,7 @@ Puppet::Type.newtype(:iis_pool) do
   newproperty(:enable_32bit) do
     desc 'A Boolean to determine if 32bit mode should enabled. Defaults to false.'
     newvalues(:false, :true)
-    #defaultto :false
+    # defaultto :false
   end
 
   newproperty(:runtime) do
@@ -36,9 +36,7 @@ Puppet::Type.newtype(:iis_pool) do
   newproperty(:pipeline) do
     desc 'The Pipeline mode to use. Values are 0 (Integrated) or 1 (Classic).'
     newvalues(:Integrated, :integrated, :Classic, :classic)
-    munge do |value|
-      value.capitalize
-    end
+    munge(&:capitalize)
     aliasvalue(:"0", :Integrated)
     aliasvalue(:"1", :Classic)
   end
@@ -47,7 +45,7 @@ Puppet::Type.newtype(:iis_pool) do
     desc 'The Identity value that should control the Application Pool.'
     validate do |value|
       # Regex needs to match account@domain + domain\account formats
-      fail("#{value} is not a valid User Identity for an Application Pool") unless value =~ %r{^[a-zA-Z0-9\\\-\_\@\.\s]+$}
+      raise("#{value} is not a valid User Identity for an Application Pool") unless value =~ /^[a-zA-Z0-9\\\-\_\@\.\s]+$/
     end
   end
 
@@ -55,27 +53,27 @@ Puppet::Type.newtype(:iis_pool) do
     desc 'The password to the Application Pool identity.'
     validate do |value|
       # Needs to validate both ENC[] password hashes and plaintext strings. Likely stored as hiera lookups.
-      #fail("#{value} is not a valid Identity Password") unless value =~ ()
+      # fail("#{value} is not a valid Identity Password") unless value =~ ()
     end
   end
 
   newproperty(:rapidfailprotection) do
     desc ''
     newvalues(:true, :false)
-    #defaultto :true
+    # defaultto :true
   end
 
   # the values/aliases of the following params are inverse in Windows 2008 Standard
   if Facter.value(:os)['release']['major'] == '2008'
     newproperty(:identitytype) do
       desc 'The type of Identity to run this AppPool under.'
-      newvalues(:"0", :"1", :"2", :"3", :"4",)
+      newvalues(:"0", :"1", :"2", :"3", :"4")
       aliasvalue(:LocalSystem, :"0")
       aliasvalue(:LocalService, :"1")
       aliasvalue(:NetworkService, :"2")
       aliasvalue(:SpecificUser, :"3")
       aliasvalue(:ApplicationPoolIdentity, :"4")
-      #defaultto :applicationPoolIdentity
+      # defaultto :applicationPoolIdentity
     end
     newproperty(:startmode) do
       # In Powershell 3, WebAdministration snapin, the 'startmode' is known as 'AutoStart' and is a bool.
@@ -84,7 +82,7 @@ Puppet::Type.newtype(:iis_pool) do
       newvalues(:true, :false)
       aliasvalue(:OnDemand, :true)
       aliasvalue(:AlwaysRunning, :false)
-      #defaultto :OnDemand
+      # defaultto :OnDemand
     end
   else
     newproperty(:identitytype) do
@@ -95,59 +93,58 @@ Puppet::Type.newtype(:iis_pool) do
       aliasvalue(:"2", :NetworkService)
       aliasvalue(:"3", :SpecificUser)
       aliasvalue(:"4", :ApplicationPoolIdentity)
-      #defaultto :applicationPoolIdentity
+      # defaultto :applicationPoolIdentity
     end
     newproperty(:startmode) do
       desc 'How the AppPool should be started.'
       newvalues(:OnDemand, :AlwaysRunning)
       aliasvalue(:true, :OnDemand)
       aliasvalue(:false, :AlwaysRunning)
-      #defaultto :OnDemand
+      # defaultto :OnDemand
     end
   end
-
 
   newproperty(:idletimeout) do
     desc 'The Idle Timeout of the AppPool (in minutes).'
     validate do |value|
-      fail("#{value} is not a valid Idle Timeout figgure, in minutes.") unless value =~ %r{^\d+$}
+      raise("#{value} is not a valid Idle Timeout figgure, in minutes.") unless value =~ /^\d+$/
     end
-    #defaultto :"20"
+    # defaultto :"20"
   end
 
   newproperty(:idletimeoutaction) do
     desc 'Action to perform upon AppPool Idle Timeout'
     newvalues(:Suspend, :Terminate)
-    #defaultto :"Terminate"
+    # defaultto :"Terminate"
   end
 
   newproperty(:maxprocesses) do
     desc 'The maximum number of processes to run the AppPool for.'
     validate do |value|
-      fail("#{value} is not a valid integer for Max Processes.") unless value =~ %r{^\d+$}
+      raise("#{value} is not a valid integer for Max Processes.") unless value =~ /^\d+$/
     end
-    #defaultto :"1"
+    # defaultto :"1"
   end
 
   newproperty(:maxqueue) do
-    #desc ''
+    # desc ''
     validate do |value|
-      fail("#{value} is not a valid queue length. Must be an Integer.") unless value =~ %r{^\d+$}
+      raise("#{value} is not a valid queue length. Must be an Integer.") unless value =~ /^\d+$/
     end
-    #defaultto :"1000"
+    # defaultto :"1000"
   end
 
   newproperty(:recyclemins) do
     desc 'How frequently (if at all) the AppPool recycles.'
     validate do |value|
-      fail("#{value} is not a valid Recycle time. Must be an Integer.") unless value =~ %r{^\d+$}
+      raise("#{value} is not a valid Recycle time. Must be an Integer.") unless value =~ /^\d+$/
     end
   end
 
   newproperty(:recyclesched) do
-    #desc ''
+    # desc ''
     validate do |value|
-      fail("#{value} is not a valid Recycle schedule. Must be in format: hh:mm:ss.") unless value =~ %r{^\d{2}:\d{2}:\d{2}$|^\b\d{2}:\d{2}:\d{2}(?:,\b\d{2}:\d{2}:\d{2}\b)*$}
+      raise("#{value} is not a valid Recycle schedule. Must be in format: hh:mm:ss.") unless value =~ /^\d{2}:\d{2}:\d{2}$|^\b\d{2}:\d{2}:\d{2}(?:,\b\d{2}:\d{2}:\d{2}\b)*$/
     end
   end
 
@@ -155,5 +152,4 @@ Puppet::Type.newtype(:iis_pool) do
     desc 'Logging type to record on AppPool recycle.'
     newvalues(:time, :requests, :schedule, :memory, :isApiUnhealthy, :onDemand, :configChange, :privateMemory)
   end
-
 end

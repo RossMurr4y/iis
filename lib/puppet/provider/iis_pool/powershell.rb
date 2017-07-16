@@ -1,9 +1,9 @@
 require 'puppet/provider/iispowershell'
 require 'json'
 
-Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::Iispowershell) do
-  confine :operatingsystem => :windows
-  confine :powershell_version => [:"5.0", :"4.0", :"3.0"]
+Puppet::Type.type(:iis_pool).provide(:powershell, parent: Puppet::Provider::Iispowershell) do
+  confine operatingsystem: :windows
+  confine powershell_version: %i[5.0 4.0 3.0]
   mk_resource_methods
 
   # Account for differences in Win2008
@@ -23,22 +23,22 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
 
   def self.poolattributes
     {
-      :enable_32bit        => 'enable32BitAppOnWin64',
-      :state               => 'state',
-      :runtime             => 'managedRuntimeVersion',
-      :pipeline            => 'managedPipelineMode',
-      :startmode           => $startMode_autoStart,
-      :maxqueue            => 'queueLength',
-      :rapidfailprotection => 'failure.rapidFailProtection',
-      :identitytype        => 'processModel.identityType',
-      :identity            => 'processModel.userName',
-      :identitypassword    => 'processModel.password',
-      :idletimeout         => 'processModel.idleTimeout.Minutes',
-      :idletimeoutaction   => 'processModel.idleTimeoutAction',
-      :maxprocesses        => 'processModel.maxProcesses',
-      :recyclemins         => 'recycling.periodicRestart.time.TotalMinutes',
-      :recyclesched        => 'recycling.periodicRestart.schedule',
-      :recyclelogging      => 'recycling.logEventOnRecycle',
+      enable_32bit: 'enable32BitAppOnWin64',
+      state: 'state',
+      runtime: 'managedRuntimeVersion',
+      pipeline: 'managedPipelineMode',
+      startmode: $startMode_autoStart,
+      maxqueue: 'queueLength',
+      rapidfailprotection: 'failure.rapidFailProtection',
+      identitytype: 'processModel.identityType',
+      identity: 'processModel.userName',
+      identitypassword: 'processModel.password',
+      idletimeout: 'processModel.idleTimeout.Minutes',
+      idletimeoutaction: 'processModel.idleTimeoutAction',
+      maxprocesses: 'processModel.maxProcesses',
+      recyclemins: 'recycling.periodicRestart.time.TotalMinutes',
+      recyclesched: 'recycling.periodicRestart.schedule',
+      recyclelogging: 'recycling.logEventOnRecycle'
     }
   end
 
@@ -55,7 +55,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     inst_cmd = "#{$snap_mod}; Get-ChildItem \"IIS:\\AppPools\" | ForEach-Object {Get-ItemProperty $_.PSPath | Select Name, state, enable32BitAppOnWin64, queueLength, managedRuntimeVersion, managedPipelineMode, #{$startMode_autoStart}, processModel, failure, recycling} | ConvertTo-Json -Depth 4 -Compress"
     pools_listed = Puppet::Type::Iis_pool::ProviderPowershell.run(inst_cmd)
     pool_json = if pools_listed == ''
-                 [] # https://github.com/RossMurr4y/iis/issues/7
+                  [] # https://github.com/RossMurr4y/iis/issues/7
                 else
                   JSON.parse(pools_listed)
                 end
@@ -95,20 +95,19 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     ]
 
     Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, value|
-      if @resource[type_param]
-        case type_param
-          when :idletimeout, :recyclemins
-            Puppet.debug "Create #{type_param}: being set to: \"#{@resource[type_param]}\""
-            command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value ([TimeSpan]::FromMinutes(#{@resource[attribute]}))"
-          when :recyclesched
-            Puppet.debug "Create type_param: #{type_param} being set to: \"#{@resource[type_param]}\""
-            command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value}"
-            command_array << "[string[]]\$RestartTimes = @(#{@resource[:recyclesched]})"
-            command_array << "ForEach ([TimeSpan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -Value @{value=\$restartTime};}"
-        else 
-          Puppet.debug "Create #{type_param}: being set to: \"#{@resource[type_param]}\""
-          command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{@resource[type_param]}"
-        end
+      next unless @resource[type_param]
+      case type_param
+      when :idletimeout, :recyclemins
+        Puppet.debug "Create #{type_param}: being set to: \"#{@resource[type_param]}\""
+        command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value ([TimeSpan]::FromMinutes(#{@resource[attribute]}))"
+      when :recyclesched
+        Puppet.debug "Create type_param: #{type_param} being set to: \"#{@resource[type_param]}\""
+        command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value}"
+        command_array << "[string[]]\$RestartTimes = @(#{@resource[:recyclesched]})"
+        command_array << "ForEach ([TimeSpan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -Value @{value=\$restartTime};}"
+      else
+        Puppet.debug "Create #{type_param}: being set to: \"#{@resource[type_param]}\""
+        command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@resource[:name]}\" -Name #{value} -value #{@resource[type_param]}"
       end
     end
 
@@ -124,7 +123,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     @resource.original_parameters.each_key do |k|
       @property_hash[k] = @resource[k]
     end
-    
+
     @property_hash[:ensure] = :present unless @property_hash[:ensure]
     exists? ? (return true) : (return false)
   end
@@ -139,46 +138,45 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     end
 
     exists? ? (return false) : (return true)
-
   end
 
-  Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, ps_prop|
+  Puppet::Type::Iis_pool::ProviderPowershell.poolattributes.each do |type_param, _ps_prop|
     define_method "#{type_param}=" do |value|
       @property_flush[type_param] = value
       @property_hash[type_param] = value
     end
   end
 
-  def start 
+  def start
     create unless exists?
     @property_flush[:state] = :Started
     @property_hash[:state] = :Started
   end
 
-  def stop 
+  def stop
     create unless exists?
     @property_flush[:state] = :Stopped
     @property_hash[:state] = :Stopped
   end
 
   def flush
-    command_array = [ $snap_mod ]
+    command_array = [$snap_mod]
 
-    @property_flush.each do |type_param, value|
+    @property_flush.each do |type_param, _value|
       attribute = Puppet::Type::Iis_pool::ProviderPowershell.poolattributes[type_param]
       case type_param
-        when :idletimeout, :recyclemins
-          Puppet.debug "Flush #{type_param}: #{attribute} being set to: \"#{@property_flush[type_param]}\""
-          command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -value ([TimeSpan]::FromMinutes(#{@property_flush[type_param]}))"
-        when :recyclesched
-          Puppet.debug "Flush #{type_param}: #{attribute} being set to: \"#{@property_flush[type_param]}\""
-          command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute}"
-          command_array << "[string[]]\$RestartTimes = @(#{@property_flush[type_param]})"
-          command_array << "ForEach ([Timespan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -Value @{value=\$restartTime};}"
-        when :state then next
-        else 
-          Puppet.debug "Flush #{type_param}: #{attribute} being set to: \"#{@property_flush[type_param]}\""
-          command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -value #{@property_flush[type_param]}"
+      when :idletimeout, :recyclemins
+        Puppet.debug "Flush #{type_param}: #{attribute} being set to: \"#{@property_flush[type_param]}\""
+        command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -value ([TimeSpan]::FromMinutes(#{@property_flush[type_param]}))"
+      when :recyclesched
+        Puppet.debug "Flush #{type_param}: #{attribute} being set to: \"#{@property_flush[type_param]}\""
+        command_array << "Clear-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute}"
+        command_array << "[string[]]\$RestartTimes = @(#{@property_flush[type_param]})"
+        command_array << "ForEach ([Timespan]\$restartTime in \$RestartTimes){ New-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -Value @{value=\$restartTime};}"
+      when :state then next
+      else
+        Puppet.debug "Flush #{type_param}: #{attribute} being set to: \"#{@property_flush[type_param]}\""
+        command_array << "Set-ItemProperty \"IIS:\\AppPools\\#{@property_hash[:name]}\" -Name #{attribute} -value #{@property_flush[type_param]}"
       end
     end
 
@@ -189,7 +187,7 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
     else
       command_array.clear
     end
-    
+
     begin
       flush_cmd = command_array.join('; ')
       Puppet.debug "Puppet Flush is as follows: #{flush_cmd}"
@@ -198,5 +196,4 @@ Puppet::Type.type(:iis_pool).provide(:powershell, :parent => Puppet::Provider::I
       raise(e)
     end
   end
-
 end

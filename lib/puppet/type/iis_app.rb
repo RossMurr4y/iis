@@ -4,16 +4,16 @@ Puppet::Type.newtype(:iis_app) do
   desc 'An IIS Virtual Application.'
   ensurable
 
-  def self.title_patterns  
-       [ [ /(.*)/m, [ [:name] ] ] ] 
-  end 
+  def self.title_patterns
+    [[/(.*)/m, [[:name]]]]
+  end
 
   ### parameters
-  newparam(:physicalpath, :namevar => true) do
+  newparam(:physicalpath, namevar: true) do
     desc 'The fully-qualified filepath to the IIS Application root directory'
     validate do |value|
       unless Pathname.new(value).absolute?
-        fail("Invalid path value of #{value}")
+        raise("Invalid path value of #{value}")
       end
     end
   end
@@ -21,7 +21,7 @@ Puppet::Type.newtype(:iis_app) do
   newparam(:name) do
     desc 'The Name of the Application within the Website.'
     validate do |value|
-      fail("#{value} is not a valid Application name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
+      raise("#{value} is not a valid Application name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
     end
   end
 
@@ -30,7 +30,7 @@ Puppet::Type.newtype(:iis_app) do
   newproperty(:app_pool) do
     desc 'The Application Pool used by the Application.'
     validate do |value|
-      fail("#{value} is not a valid Application Pool name") unless value =~ %r{[a-zA-Z0-9\-\_'\s]+$}
+      raise("#{value} is not a valid Application Pool name") unless value =~ /[a-zA-Z0-9\-\_'\s]+$/
     end
     defaultto :DefaultAppPool
   end
@@ -38,7 +38,7 @@ Puppet::Type.newtype(:iis_app) do
   newproperty(:parent_site) do
     desc 'The Site that this Application belongs under.'
     validate do |value|
-       fail("#{value} is not a valid website name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
+      raise("#{value} is not a valid website name") unless value =~ %r{^[a-zA-Z0-9\/\-\_\.'\s]+$}
     end
   end
 
@@ -49,5 +49,4 @@ Puppet::Type.newtype(:iis_app) do
   autorequire(:iis_pool) do
     self[:app_pool] if @parameters.include? :app_pool
   end
-
 end
